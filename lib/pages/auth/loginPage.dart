@@ -29,6 +29,7 @@ class Loginpage extends StatelessWidget {
         final responseData = json.decode(response.body);
         final token = responseData['token'];
         if (token != null) {
+          print('Token: $token');
           // Save token to SharedPreferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('jwt_token', token);

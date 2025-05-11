@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/auth/loginPage.dart';
 import 'pages/auth/signUpPage.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure initialized
   runApp(const MyApp());
 }
 
@@ -22,27 +23,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    setState(() {
-      initialRoute = (token != null && token.isNotEmpty) ? '/home' : '/';
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (initialRoute == null) {
-      // Show splash/loading screen while checking login status
-      return const MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
