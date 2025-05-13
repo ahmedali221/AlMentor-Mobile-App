@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFeb2027),
-        title: const Text(
-          'Home',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Home'),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Provider.of<ThemeProvider>(context).isDarkMode
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: () {
+              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+            },
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -23,12 +33,12 @@ class HomePage extends StatelessWidget {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                color: Color(0xFFeb2027),
+                color: theme.primaryColor,
               ),
               child: Text(
                 'Menu',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                   fontSize: 24,
                 ),
               ),
@@ -49,6 +59,14 @@ class HomePage extends StatelessWidget {
                 Navigator.pushReplacementNamed(context, '/');
               },
             ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('instrctors'),
+              onTap: () {
+                // Navigate to settings page
+                Navigator.pushNamed(context, '/instructors');
+              },
+            )
           ],
         ),
       ),
@@ -56,26 +74,15 @@ class HomePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Welcome to Almentor Clone!',
-              style: TextStyle(
-                fontSize: 26,
+              style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF000000),
               ),
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFeb2027),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
               onPressed: () async {
-                // Remove token from SharedPreferences
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.remove('jwt_token');
                 Navigator.pushReplacementNamed(context, '/');
@@ -83,7 +90,6 @@ class HomePage extends StatelessWidget {
               child: const Text(
                 'Logout',
                 style: TextStyle(
-                  color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
