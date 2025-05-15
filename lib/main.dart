@@ -1,5 +1,5 @@
 import 'package:almentor_clone/pages/homePage.dart';
-import 'package:almentor_clone/pages/instructors.dart';
+import 'package:almentor_clone/pages/instructors/instructors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';

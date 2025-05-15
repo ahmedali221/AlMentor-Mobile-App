@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/instructor.dart';
+import '../../models/instructor.dart';
 
 class InstructorDetailsPage extends StatelessWidget {
   final Instructor instructor;

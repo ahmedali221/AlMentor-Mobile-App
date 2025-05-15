@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../models/instructor.dart';
+import '../../models/instructor.dart';
 import 'package:almentor_clone/Core/Constants/apiConstants.dart';
 import 'instructor_details.dart';
 
