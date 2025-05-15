@@ -11,6 +11,8 @@ class Loginpage extends StatelessWidget {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  Loginpage({super.key});
   Future<void> loginUser(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final response = await http.post(

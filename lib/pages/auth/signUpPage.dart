@@ -18,6 +18,8 @@ class SignUpPage extends StatelessWidget {
       TextEditingController(text: "https://example.com/profiles/sara.jpg");
   final _formKey = GlobalKey<FormState>();
 
+  SignUpPage({super.key});
+
   Future<void> signUpUser(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final response = await http.post(

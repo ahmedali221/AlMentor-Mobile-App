@@ -1,13 +1,21 @@
 import 'package:almentor_clone/pages/homePage.dart';
+import 'package:almentor_clone/pages/instructors/instructors.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:almentor_clone/Core/Providers/themeProvider.dart';
+import 'package:almentor_clone/Core/Themes/lightTheme.dart';
+import 'package:almentor_clone/Core/Themes/darkTheme.dart';
 
-import 'pages/auth/loginPage.dart';
 import 'pages/auth/signUpPage.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure initialized
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -27,14 +35,23 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      initialRoute: initialRoute,
-      routes: {
-        '/': (context) => Loginpage(),
-        '/signup': (context) => SignUpPage(),
-        '/home': (context) => const HomePage(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode:
+              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          initialRoute: initialRoute,
+          routes: {
+            '/': (context) => const HomePage(),
+            '/signup': (context) => SignUpPage(),
+            '/home': (context) => const HomePage(),
+            '/instructors': (context) => const Instructors(),
+          },
+        );
       },
     );
   }
