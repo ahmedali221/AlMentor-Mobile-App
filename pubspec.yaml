@@ -37,6 +37,8 @@ dependencies:
   http: ^1.4.0
   shared_preferences: ^2.5.3
   provider: ^6.1.5
+  carousel_slider: ^5.0.0
+
 
 dev_dependencies:
   flutter_test:
@@ -60,9 +62,33 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/teacher1.png
+    - assets/images/teacher2.png
+    - assets/images/teacher3.png
+    - assets/images/teacher4.png
+    - assets/images/teacher5.png
+    - assets/images/num1.png
+    - assets/images/num2.png
+    - assets/images/num3.png
+    - assets/images/num4.png
+    - assets/images/num5.png
+    - assets/images/num6.png
+    - assets/images/num7.png
+    - assets/images/prog1.png
+    - assets/images/prog2.png
+    - assets/images/prog3.png
+    - assets/images/co1.png
+    - assets/images/co2.png
+    - assets/images/co3.png
+    - assets/images/f1.png
+    - assets/images/f2.png
+    - assets/images/f3.png
+    - assets/images/join.png
+    - assets/images/jo.png
+    
+    
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -2,10 +2,11 @@ import 'package:almentor_clone/Core/Custom%20Widgets/customTextField.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Core/Custom Widgets/customButton.dart';
+import '../../Core/Providers/themeProvider.dart';
 
 class SignUpPage extends StatelessWidget {
   final usernameController = TextEditingController(text: "sara456");
@@ -63,8 +64,9 @@ class SignUpPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // white background
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -76,14 +78,27 @@ class SignUpPage extends StatelessWidget {
                 'assets/almentor_logo.png',
                 height: 80,
               ),
+              
+              // Theme toggle
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: IconButton(
+                  icon: Icon(
+                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  onPressed: () {
+                    themeProvider.toggleTheme();
+                  },
+                ),
+              ),
 
               // Card Container
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -98,28 +113,26 @@ class SignUpPage extends StatelessWidget {
                   child: Column(
                     spacing: 24,
                     children: <Widget>[
-                      const Text(
+                      Text(
                         'Sign Up',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF000000), // black text
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                       CustomTextField(
                         labelText: 'Username',
                         hintText: 'Enter your username',
                         controller: usernameController,
-                        prefixIcon:
-                            const Icon(Icons.person, color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.person, color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Email',
                         hintText: 'Enter your email',
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        prefixIcon:
-                            const Icon(Icons.email, color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.email, color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Password',
@@ -127,44 +140,39 @@ class SignUpPage extends StatelessWidget {
                         controller: passwordController,
                         keyboardType: TextInputType.text,
                         obscureText: true,
-                        prefixIcon:
-                            const Icon(Icons.lock, color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.lock, color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'First Name',
                         hintText: 'Enter your first name',
                         controller: firstNameController,
-                        prefixIcon: const Icon(Icons.person_outline,
-                            color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.person_outline, color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Last Name',
                         hintText: 'Enter your last name',
                         controller: lastNameController,
-                        prefixIcon: const Icon(Icons.person_outline,
-                            color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.person_outline, color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Profile Picture URL',
-                        hintText: 'Enter your profile picture URL',
+                        hintText: 'Enter URL to your profile picture',
                         controller: profilePictureController,
-                        keyboardType: TextInputType.url,
-                        prefixIcon:
-                            const Icon(Icons.image, color: Color(0xFFeb2027)),
+                        prefixIcon: Icon(Icons.image, color: Theme.of(context).primaryColor),
                       ),
                       CustomButton(
                         text: 'Sign Up',
                         onPressed: () => signUpUser(context),
-                        backgroundColor: const Color(0xFFeb2027),
+                        backgroundColor: Theme.of(context).primaryColor,
                         textColor: Colors.white,
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/login');
                         },
-                        child: const Text(
+                        child: Text(
                           "Already have an account? Login",
-                          style: TextStyle(color: Color(0xFFeb2027)),
+                          style: TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ],

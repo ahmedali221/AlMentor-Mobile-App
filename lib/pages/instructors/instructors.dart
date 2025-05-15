@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:provider/provider.dart';
 import '../../models/instructor.dart';
 import 'package:almentor_clone/Core/Constants/apiConstants.dart';
+import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'instructor_details.dart';
 
 class Instructors extends StatefulWidget {
@@ -78,15 +80,9 @@ class _InstructorsState extends State<Instructors> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Instructors'),
-        centerTitle: true,
-      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -217,7 +213,10 @@ class _InstructorsState extends State<Instructors> {
   }
 
   Widget _buildInstructorCard(Instructor instructor) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Card(
+      color: Theme.of(context).cardColor,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -239,7 +238,7 @@ class _InstructorsState extends State<Instructors> {
                   )
                 : CircleAvatar(
                     radius: 50,
-                    backgroundColor: const Color(0xFFeb2027),
+                    backgroundColor: Theme.of(context).primaryColor,
                     child: Text(
                       '${instructor.firstName[0]}${instructor.lastName[0]}',
                       style: const TextStyle(
@@ -249,41 +248,30 @@ class _InstructorsState extends State<Instructors> {
                       ),
                     ),
                   ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               '${instructor.firstName} ${instructor.lastName}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
                 fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Column(
-                children: [
-                  Text(
-                    instructor.professionalTitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    instructor.expertiseAreas.join(', '),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            Text(
+              instructor.professionalTitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.7),
               ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

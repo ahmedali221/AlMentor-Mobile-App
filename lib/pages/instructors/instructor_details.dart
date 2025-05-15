@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/instructor.dart';
+import '../../Core/Providers/themeProvider.dart';
 
 class InstructorDetailsPage extends StatelessWidget {
   final Instructor instructor;
@@ -11,6 +13,8 @@ class InstructorDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -19,6 +23,14 @@ class InstructorDetailsPage extends StatelessWidget {
         ),
         title: Text('${instructor.firstName} ${instructor.lastName}'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -40,7 +52,7 @@ class InstructorDetailsPage extends StatelessWidget {
                         )
                       : CircleAvatar(
                           radius: 75,
-                          backgroundColor: const Color(0xFFeb2027),
+                          backgroundColor: Theme.of(context).primaryColor,
                           child: Text(
                             '${instructor.firstName[0]}${instructor.lastName[0]}',
                             style: const TextStyle(
@@ -53,17 +65,18 @@ class InstructorDetailsPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     '${instructor.firstName} ${instructor.lastName}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     instructor.professionalTitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -76,11 +89,12 @@ class InstructorDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Expertise Areas',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -90,9 +104,8 @@ class InstructorDetailsPage extends StatelessWidget {
                     children: instructor.expertiseAreas.map((area) {
                       return Chip(
                         label: Text(area),
-                        backgroundColor:
-                            const Color(0xFFeb2027).withOpacity(0.1),
-                        labelStyle: const TextStyle(color: Color(0xFFeb2027)),
+                        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                       );
                     }).toList(),
                   ),
@@ -106,20 +119,21 @@ class InstructorDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Biography',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     instructor.biography,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.5,
-                      color: Color.fromARGB(255, 105, 104, 104),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
                     ),
                   ),
                 ],
