@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Core/Providers/themeProvider.dart';
-import '../widgets/section_title.dart';
-import '../widgets/section_description.dart';
-import '../widgets/horizontal_course_list.dart';
-import '../widgets/horizontal_learning_programs.dart';
-import '../widgets/horizontal_most_viewed.dart';
-import '../widgets/horizontal_popular_courses.dart';
+import '../Core/Custom Widgets/section_title.dart';
+import '../Core/Custom Widgets/section_description.dart';
+import '../Core/Custom Widgets/horizontal_course_list.dart';
+import '../Core/Custom Widgets/horizontal_learning_programs.dart';
+import '../Core/Custom Widgets/horizontal_most_viewed.dart';
+import '../Core/Custom Widgets/horizontal_popular_courses.dart';
 import '../data/home_demo_data.dart';
 
 class MainPage extends StatelessWidget {
@@ -15,7 +15,7 @@ class MainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Directionality(
       textDirection: TextDirection.rtl, // Set RTL direction for Arabic content
       child: Scaffold(
@@ -38,10 +38,11 @@ class MainPage extends StatelessWidget {
         ),
         body: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Align content to the right in RTL
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // Align content to the right in RTL
             children: [
               const SizedBox(height: 16),
-              
+
               // Popular Courses Section
               SectionTitle(
                 title: 'الدورات الشائعة',
@@ -53,9 +54,9 @@ class MainPage extends StatelessWidget {
               HorizontalPopularCourses(
                 courses: HomePageDemoData.featuredCourses,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Regular Courses Section
               SectionTitle(
                 title: 'دورات مميزة',
@@ -67,9 +68,9 @@ class MainPage extends StatelessWidget {
               HorizontalCourseList(
                 courses: HomePageDemoData.courses,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Learning Programs Section
               SectionTitle(
                 title: 'برامج تعليمية',
@@ -81,9 +82,9 @@ class MainPage extends StatelessWidget {
               HorizontalLearningPrograms(
                 programs: HomePageDemoData.learningPrograms,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Most Watched Section
               SectionTitle(
                 title: 'الأكثر مشاهدة',
@@ -95,7 +96,7 @@ class MainPage extends StatelessWidget {
               HorizontalMostViewed(
                 courses: HomePageDemoData.mostWatched,
               ),
-              
+
               const SizedBox(height: 32),
             ],
           ),
