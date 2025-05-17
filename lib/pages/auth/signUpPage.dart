@@ -24,7 +24,7 @@ class SignUpPage extends StatelessWidget {
   Future<void> signUpUser(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/register'),
+        Uri.parse('http://192.168.1.7:5000/api/auth/register'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -65,7 +65,7 @@ class SignUpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -78,13 +78,15 @@ class SignUpPage extends StatelessWidget {
                 'assets/almentor_logo.png',
                 height: 80,
               ),
-              
+
               // Theme toggle
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: IconButton(
                   icon: Icon(
-                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    themeProvider.isDarkMode
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
                     color: Theme.of(context).primaryColor,
                   ),
                   onPressed: () {
@@ -96,7 +98,8 @@ class SignUpPage extends StatelessWidget {
               // Card Container
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
@@ -125,14 +128,16 @@ class SignUpPage extends StatelessWidget {
                         labelText: 'Username',
                         hintText: 'Enter your username',
                         controller: usernameController,
-                        prefixIcon: Icon(Icons.person, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.person,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Email',
                         hintText: 'Enter your email',
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icon(Icons.email, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.email,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Password',
@@ -140,25 +145,29 @@ class SignUpPage extends StatelessWidget {
                         controller: passwordController,
                         keyboardType: TextInputType.text,
                         obscureText: true,
-                        prefixIcon: Icon(Icons.lock, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.lock,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'First Name',
                         hintText: 'Enter your first name',
                         controller: firstNameController,
-                        prefixIcon: Icon(Icons.person_outline, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.person_outline,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Last Name',
                         hintText: 'Enter your last name',
                         controller: lastNameController,
-                        prefixIcon: Icon(Icons.person_outline, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.person_outline,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Profile Picture URL',
                         hintText: 'Enter URL to your profile picture',
                         controller: profilePictureController,
-                        prefixIcon: Icon(Icons.image, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.image,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomButton(
                         text: 'Sign Up',
@@ -172,7 +181,8 @@ class SignUpPage extends StatelessWidget {
                         },
                         child: Text(
                           "Already have an account? Login",
-                          style: TextStyle(color: Theme.of(context).primaryColor),
+                          style:
+                              TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ],

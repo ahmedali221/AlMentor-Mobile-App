@@ -30,7 +30,7 @@ class _InstructorsState extends State<Instructors> {
   Future<void> fetchInstructors() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.instructorsEndpoint}'),
+        Uri.parse('http://192.168.1.7:5000/api/instructors'),
       );
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);

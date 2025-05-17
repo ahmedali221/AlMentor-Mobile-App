@@ -14,40 +14,64 @@ class Loginpage extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
 
   Loginpage({super.key});
-  
   Future<void> loginUser(BuildContext context) async {
+    // Create a local variable for mounted check
+    bool mounted = true;
+    // Use a StatefulBuilder to update mounted if needed (since this is a StatelessWidget, consider refactoring to StatefulWidget for full safety)
     if (_formKey.currentState!.validate()) {
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'email': emailController.text,
-          'password': passwordController.text,
-        }),
-      );
+      try {
+        final response = await http.post(
+          Uri.parse('http://192.168.1.7:5000/api/auth/login'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'email': emailController.text,
+            'password': passwordController.text,
+          }),
+        );
 
-      if (response.statusCode == 200) {
-        // Extract JWT token from response
-        final responseData = json.decode(response.body);
-        final token = responseData['token'];
-        if (token != null) {
-          print('Token: $token');
-          // Save token to SharedPreferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('jwt_token', token);
-          Navigator.pushReplacementNamed(context, '/home');
+        if (response.statusCode == 200) {
+          // Extract JWT token from response
+          final responseData = json.decode(response.body);
+          final token = responseData['token'];
+          if (token != null) {
+            // Use debugPrint instead of print for logging
+            debugPrint('Token: $token');
+            // Save token to SharedPreferences
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('jwt_token', token);
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Login failed: Token not found')),
+              );
+            }
+          }
         } else {
+          // Handle login error
+          String errorMsg = 'Login failed: ';
+          try {
+            final errorData = json.decode(response.body);
+            errorMsg += errorData['message'] ?? response.body;
+          } catch (_) {
+            errorMsg += response.body;
+          }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(errorMsg)),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed: Token not found')),
+            SnackBar(content: Text('An error occurred: $e')),
           );
         }
-      } else {
-        // Handle login error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${response.body}')),
-        );
       }
     }
   }
@@ -55,7 +79,7 @@ class Loginpage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -67,13 +91,15 @@ class Loginpage extends StatelessWidget {
                 'assets/almentor_logo.png',
                 height: 80,
               ),
-              
+
               // Theme toggle
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: IconButton(
                   icon: Icon(
-                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    themeProvider.isDarkMode
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
                     color: Theme.of(context).primaryColor,
                   ),
                   onPressed: () {
@@ -81,11 +107,12 @@ class Loginpage extends StatelessWidget {
                   },
                 ),
               ),
-              
+
               // Card Container
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
@@ -115,8 +142,10 @@ class Loginpage extends StatelessWidget {
                         hintText: 'Enter your email',
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icon(Icons.email, color: Theme.of(context).primaryColor),
-                        suffixIcon: Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.email,
+                            color: Theme.of(context).primaryColor),
+                        suffixIcon: Icon(Icons.check_circle,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomTextField(
                         labelText: 'Password',
@@ -124,8 +153,10 @@ class Loginpage extends StatelessWidget {
                         controller: passwordController,
                         keyboardType: TextInputType.text,
                         obscureText: true,
-                        prefixIcon: Icon(Icons.lock, color: Theme.of(context).primaryColor),
-                        suffixIcon: Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+                        prefixIcon: Icon(Icons.lock,
+                            color: Theme.of(context).primaryColor),
+                        suffixIcon: Icon(Icons.check_circle,
+                            color: Theme.of(context).primaryColor),
                       ),
                       CustomButton(
                         text: 'Login',
@@ -139,7 +170,8 @@ class Loginpage extends StatelessWidget {
                         },
                         child: Text(
                           "Don't have an account? Sign Up",
-                          style: TextStyle(color: Theme.of(context).primaryColor),
+                          style:
+                              TextStyle(color: Theme.of(context).primaryColor),
                         ),
                       ),
                     ],

@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Core/Providers/themeProvider.dart';
 
-import '../pages/account_page.dart';
-import '../pages/my_courses_page.dart';
+import 'profile/account_page.dart';
 import '../pages/clips_page.dart';
-import '../pages/search_page.dart';
+import 'categories/search_page.dart';
 import '../pages/mainPage.dart';
+import 'courses/courses_page.dart';
+import 'ai-chat/ai_mentor_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +22,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = const [
     AccountPage(),
-    MyCoursesPage(),
+    CoursesPage(),
     ClipsPage(),
     SearchPage(),
     Instructors(), // Instructors page
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _selectedIndex == 4
@@ -45,15 +46,21 @@ class _HomePageState extends State<HomePage> {
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
               title: Text(
-                'Almentor', 
+                'Almentor',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color
-                ),
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
               actions: [
                 IconButton(
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                    icon: Icon(Icons.list)),
+                IconButton(
                   icon: Icon(
-                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    themeProvider.isDarkMode
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
                     color: Theme.of(context).primaryColor,
                   ),
                   onPressed: () {
@@ -63,6 +70,100 @@ class _HomePageState extends State<HomePage> {
               ],
             )
           : null,
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Almentor',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Your Learning Companion',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.smart_toy_outlined,
+                color: Theme.of(context).primaryColor,
+              ),
+              title: Row(
+                children: [
+                  Text('Try Your Mentor'),
+                  SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'NEW',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AiMentorPage(),
+                  ),
+                );
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Subscription'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/subscribe');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to settings
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.help_outline),
+              title: Text('Help & Support'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to help
+              },
+            ),
+          ],
+        ),
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

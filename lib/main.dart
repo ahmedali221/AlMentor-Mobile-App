@@ -1,4 +1,9 @@
+import 'package:almentor_clone/pages/categories/categoryCourses.dart';
+import 'package:almentor_clone/pages/courses/coursesDetails.dart';
+import 'package:almentor_clone/pages/courses/courses_page.dart';
 import 'package:almentor_clone/pages/instructors/instructors.dart';
+import 'package:almentor_clone/pages/subs%20and%20payment/craditpayment.dart';
+import 'package:almentor_clone/pages/subs%20and%20payment/subscribe.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';
@@ -7,10 +12,9 @@ import 'package:almentor_clone/Core/Themes/darkTheme.dart';
 
 import 'pages/auth/loginPage.dart';
 import 'pages/auth/signUpPage.dart';
-import 'pages/account_page.dart';
-import 'pages/my_courses_page.dart';
+import 'pages/profile/account_page.dart';
 import 'pages/clips_page.dart';
-import 'pages/search_page.dart';
+import 'pages/categories/search_page.dart';
 import 'pages/home_page.dart';
 
 void main() async {
@@ -31,7 +35,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String? initialRoute = '/login'; // Set initial route to login page
+  String? initialRoute = '/login';
 
   @override
   void initState() {
@@ -56,9 +60,10 @@ class _MyAppState extends State<MyApp> {
             '/home': (context) => const HomePage(),
             '/instructors': (context) => const Instructors(),
             '/account': (context) => const AccountPage(),
-            '/courses': (context) => const MyCoursesPage(),
+            '/courses': (context) => const CoursesPage(),
             '/clips': (context) => const ClipsPage(),
             '/search': (context) => const SearchPage(),
+            '/subscribe': (context) => SubscribePage(),
           },
         );
       },

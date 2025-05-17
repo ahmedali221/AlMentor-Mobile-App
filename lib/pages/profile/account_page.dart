@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../Core/Providers/themeProvider.dart';
+import '../../Core/Providers/themeProvider.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -8,7 +8,7 @@ class AccountPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -42,8 +42,11 @@ class AccountPage extends StatelessWidget {
           // Profile Avatar
           CircleAvatar(
             radius: 48,
-            backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.2),
-            child: Icon(Icons.person, size: 64, color: Theme.of(context).colorScheme.surface.withOpacity(0.5)),
+            backgroundColor:
+                Theme.of(context).colorScheme.surface.withOpacity(0.2),
+            child: Icon(Icons.person,
+                size: 64,
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.5)),
           ),
           const SizedBox(height: 18),
           // Red Card
