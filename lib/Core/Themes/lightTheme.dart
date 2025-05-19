@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primaryColor: const Color(0xFFeb2027),
+  iconTheme: IconThemeData(
+    color: Colors.black,
+  ),
   scaffoldBackgroundColor: Colors.white,
   colorScheme: const ColorScheme.light(
     primary: Color(0xFFeb2027),
@@ -12,7 +15,7 @@ ThemeData lightTheme = ThemeData(
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFFeb2027),
     foregroundColor: Colors.white,
-    iconTheme: IconThemeData(color: Colors.white),
+    iconTheme: IconThemeData(color: Colors.black),
   ),
   drawerTheme: const DrawerThemeData(
     backgroundColor: Colors.white,

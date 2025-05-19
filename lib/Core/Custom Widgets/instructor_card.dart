@@ -10,7 +10,7 @@ class InstructorCard extends StatelessWidget {
     super.key,
     required this.instructor,
     this.onTap,
-    this.isArabic = true,
+    this.isArabic = false,
   });
 
   @override
@@ -22,70 +22,53 @@ class InstructorCard extends StatelessWidget {
     final String professionalTitle = isArabic
         ? instructor.professionalTitleAr
         : instructor.professionalTitleEn;
-    final List<String> expertiseAreas =
-        isArabic ? instructor.expertiseAr : instructor.expertiseEn;
     final String profilePicture = user.profilePicture;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        width: 170,
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Instructor Image
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: profilePicture.startsWith('http')
-                  ? Image.network(
-                      profilePicture,
-                      height: 110,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 110,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.person, size: 50),
-                      ),
-                    )
-                  : Image.asset(
-                      profilePicture,
-                      height: 110,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 110,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.person, size: 50),
-                      ),
-                    ),
+            // Instructor Image with circular avatar
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: profilePicture.startsWith('http')
+                    ? NetworkImage(profilePicture) as ImageProvider
+                    : AssetImage(profilePicture),
+                child: profilePicture.isEmpty
+                    ? Icon(Icons.person, size: 40, color: Colors.grey[500])
+                    : null,
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Instructor Name
                   Text(
                     name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -94,34 +77,33 @@ class InstructorCard extends StatelessWidget {
                   // Professional Title
                   Text(
                     professionalTitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      height: 1.4,
+                    ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
-                  // Expertise Areas Chips
-                  if (expertiseAreas.isNotEmpty)
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: expertiseAreas
-                          .take(2)
-                          .map((area) => Chip(
-                                label: Text(
-                                  area,
-                                  style: const TextStyle(fontSize: 10),
-                                ),
-                                padding: EdgeInsets.zero,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                              ))
-                          .toList(),
-                    ),
+                  const SizedBox(height: 8),
+                  // Rating and courses count
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
+                      Text(
+                        '•',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -132,135 +114,92 @@ class InstructorCard extends StatelessWidget {
   }
 }
 
-class HorizontalInstructorList extends StatefulWidget {
+class HorizontalInstructorList extends StatelessWidget {
   final List<Instructor> instructors;
   final String? title;
-  final String? description;
+  final String? seeAllText;
   final Function(Instructor)? onInstructorTap;
+  final bool isArabic;
 
   const HorizontalInstructorList({
     super.key,
     required this.instructors,
     this.title,
-    this.description,
+    this.seeAllText,
     this.onInstructorTap,
+    this.isArabic = true,
   });
 
   @override
-  State<HorizontalInstructorList> createState() =>
-      _HorizontalInstructorListState();
-}
-
-class _HorizontalInstructorListState extends State<HorizontalInstructorList>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _controller,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title and Description
-          if (widget.title != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title and See All
+        if (title != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title!,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                if (seeAllText != null)
                   TextButton(
                     onPressed: () {},
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                    ),
                     child: Row(
-                      children: const [
+                      children: [
                         Text(
-                          'عرض الكل',
-                          style: TextStyle(
-                            color: Colors.blue,
+                          seeAllText!,
+                          style: const TextStyle(
+                            color: Color(0xFF00A0E3),
                             fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, size: 16),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: Color(0xFF00A0E3),
+                        ),
                       ],
                     ),
                   ),
-                  Text(
-                    widget.title!,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-
-          if (widget.description != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                widget.description!,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontSize: 14),
-                textAlign: TextAlign.right,
-              ),
-            ),
-
-          const SizedBox(height: 16),
-
-          // Instructor Cards
-          SizedBox(
-            height: 240,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: widget.instructors.length,
-              itemBuilder: (context, index) {
-                final delay = 100 * index;
-                return AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    final animationValue = _controller.value;
-                    final shouldShow = animationValue > (index * 0.08);
-                    return AnimatedOpacity(
-                      opacity: shouldShow ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 400),
-                      child: Transform.translate(
-                        offset: Offset(shouldShow ? 0 : 40, 0),
-                        child: InstructorCard(
-                          instructor: widget.instructors[index],
-                          onTap: widget.onInstructorTap != null
-                              ? () => widget
-                                  .onInstructorTap!(widget.instructors[index])
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
+              ],
             ),
           ),
-        ],
-      ),
+        const SizedBox(height: 16),
+
+        // Instructor Cards
+        SizedBox(
+          height: 200, // Reduced height to match almentor style
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: instructors.length,
+            itemBuilder: (context, index) {
+              return InstructorCard(
+                instructor: instructors[index],
+                onTap: onInstructorTap != null
+                    ? () => onInstructorTap!(instructors[index])
+                    : null,
+                isArabic: isArabic,
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

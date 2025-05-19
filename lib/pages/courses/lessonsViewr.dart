@@ -1,3 +1,4 @@
+import 'package:almentor_clone/pages/courses/certificatePage.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
@@ -77,6 +78,19 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
       currentIndex = newIndex;
     });
     _loadVideo();
+  }
+
+  void _onNextPressed() {
+    if (currentIndex < widget.lessons.length - 1) {
+      _changeLesson(currentIndex + 1);
+    } else {
+      // Course completed, navigate to congratulations page
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const CongratulationsPage(),
+        ),
+      );
+    }
   }
 
   Module? getCurrentModule() {
@@ -231,10 +245,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                     ),
                     TextButton.icon(
                       icon: const Icon(Icons.arrow_forward),
-                      label: const Text("Next"),
-                      onPressed: currentIndex < widget.lessons.length - 1
-                          ? () => _changeLesson(currentIndex + 1)
-                          : null,
+                      label: Text(
+                        currentIndex == widget.lessons.length - 1
+                            ? "Finish"
+                            : "Next",
+                      ),
+                      onPressed: _onNextPressed,
                     ),
                   ],
                 ),

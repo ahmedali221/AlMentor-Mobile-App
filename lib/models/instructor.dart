@@ -29,17 +29,18 @@ class Instructor {
 
   factory Instructor.fromJson(Map<String, dynamic> json) {
     return Instructor(
-      id: json['_id'],
-      professionalTitleEn: json['professionalTitle']['en'],
-      professionalTitleAr: json['professionalTitle']['ar'],
-      expertiseEn: List<String>.from(json['expertiseAreas']['en']),
-      expertiseAr: List<String>.from(json['expertiseAreas']['ar']),
-      biographyEn: json['biography']['en'],
-      biographyAr: json['biography']['ar'],
+      id: json['_id'] ?? json['id'] ?? '',
+      professionalTitleEn: json['professionalTitle']?['en'] ?? '',
+      professionalTitleAr: json['professionalTitle']?['ar'] ?? '',
+      expertiseEn: List<String>.from(json['expertiseAreas']?['en'] ?? []),
+      expertiseAr: List<String>.from(json['expertiseAreas']?['ar'] ?? []),
+      biographyEn: json['biography']?['en'] ?? '',
+      biographyAr: json['biography']?['ar'] ?? '',
       yearsOfExperience: json['yearsOfExperience'] ?? 0,
-      approvalStatus: json['approvalStatus'],
-      user: User.fromJson(json['user']),
-      socialMediaLinks: Map<String, String>.from(json['socialMediaLinks'] ?? {}),
+      approvalStatus: json['approvalStatus'] ?? '',
+      user: User.fromJson(json['profile'] ?? {}),
+      socialMediaLinks:
+          Map<String, String>.from(json['socialMediaLinks'] ?? {}),
     );
   }
 
@@ -54,7 +55,7 @@ class Instructor {
       'biographyAr': biographyAr,
       'yearsOfExperience': yearsOfExperience,
       'approvalStatus': approvalStatus,
-      'user': user.toJson(), // Assuming User class has a toJson method
+      'user': user.toJson(),
       'socialMediaLinks': socialMediaLinks,
     };
   }

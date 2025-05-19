@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Core/Providers/themeProvider.dart';
 import '../../services/auth_service.dart';
-import '../../models/user.dart'; // Make sure this is your new User model
+import '../../models/user.dart';
 import '../auth/loginPage.dart';
 
 class AccountPage extends StatefulWidget {
@@ -29,11 +31,14 @@ class _AccountPageState extends State<AccountPage> {
     });
 
     try {
-      final user = await _authService.getCurrentUser();
-      setState(() {
-        _user = user;
-        _isLoading = false;
-      });
+      final token = await _authService.getToken();
+      if (token != null) {
+        final user = await _authService.getCurrentUser();
+        setState(() {
+          _user = user;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -57,6 +62,9 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -71,10 +79,7 @@ class _AccountPageState extends State<AccountPage> {
                   children: [
                     CircleAvatar(
                       radius: 48,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .surface
-                          .withOpacity(0.2),
+                      backgroundColor: surfaceColor.withOpacity(0.2),
                       backgroundImage: _user?.profilePicture != null &&
                               _user!.profilePicture.isNotEmpty
                           ? NetworkImage(_user!.profilePicture)
@@ -83,18 +88,17 @@ class _AccountPageState extends State<AccountPage> {
                               _user!.profilePicture.isEmpty
                           ? Icon(Icons.person,
                               size: 64,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surface
-                                  .withOpacity(0.5))
+                              color: isDark
+                                  ? surfaceColor.withOpacity(0.5)
+                                  : Colors.grey[400])
                           : null,
                     ),
                     const SizedBox(height: 12),
                     if (_user != null) ...[
                       Text(
-                        _user!.username,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        '${_user!.firstNameEn} ${_user!.lastNameEn}',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
                         ),
@@ -102,17 +106,8 @@ class _AccountPageState extends State<AccountPage> {
                       const SizedBox(height: 4),
                       Text(
                         _user!.email,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        // Display full name in Arabic as an example
-                        '${_user!.firstNameAr} ${_user!.lastNameAr}',
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black54,
                           fontSize: 16,
                         ),
                       ),
@@ -151,34 +146,33 @@ class _AccountPageState extends State<AccountPage> {
                 // Texts and Button
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'استثمر في نفسك',
+                      Text(
+                        'Invest in yourself',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: isDark ? Colors.white : Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
-                        textAlign: TextAlign.right,
+                        textAlign: TextAlign.left,
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'استمتع بكل الكورسات وطور مهاراتك.',
+                      Text(
+                        'Enjoy all courses and improve your skills.',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: isDark ? Colors.white : Colors.white,
                           fontSize: 14,
                         ),
-                        textAlign: TextAlign.right,
+                        textAlign: TextAlign.left,
                       ),
                       const SizedBox(height: 8),
                       Align(
-                        alignment: Alignment.bottomRight,
+                        alignment: Alignment.bottomLeft,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
-                            foregroundColor:
-                                const Color.fromARGB(255, 255, 255, 255),
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 18, vertical: 6),
                             shape: RoundedRectangleBorder(
@@ -186,8 +180,8 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                           ),
                           onPressed: () {},
-                          icon: const Icon(Icons.arrow_back, size: 18),
-                          label: const Text('اشترك الآن'),
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: const Text('Subscribe Now'),
                         ),
                       ),
                     ],
@@ -201,10 +195,23 @@ class _AccountPageState extends State<AccountPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(
+                children: [
+                  Icon(Icons.language, color: onSurface, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Language',
+                    style: TextStyle(
+                      color: onSurface,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
               TextButton(
                 onPressed: () {},
                 child: const Text(
-                  'English',
+                  'العربية',
                   style: TextStyle(
                     color: Colors.cyan,
                     fontWeight: FontWeight.bold,
@@ -212,24 +219,20 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
               ),
-              Row(
-                children: const [
-                  Text(
-                    'اللغة',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.language, color: Colors.white, size: 20),
-                ],
-              ),
             ],
           ),
-          const Divider(color: Colors.white24, height: 24),
+          Divider(
+            color: isDark ? Colors.white24 : Colors.black12,
+            height: 24,
+          ),
           // Settings List
-          _settingsTile('عن المنتور', Icons.help_outline),
-          _settingsTile('الشروط والأحكام', Icons.menu_book_outlined),
-          _settingsTile('سياسة الخصوصية', Icons.lock_outline),
-          _settingsTile('المساعدة', Icons.info_outline),
+          _settingsTile(
+              'About Almentor', Icons.help_outline, isDark, onSurface),
+          _settingsTile('Terms & Conditions', Icons.menu_book_outlined, isDark,
+              onSurface),
+          _settingsTile(
+              'Privacy Policy', Icons.lock_outline, isDark, onSurface),
+          _settingsTile('Help', Icons.info_outline, isDark, onSurface),
           const SizedBox(height: 18),
           // Login/Logout Button
           SizedBox(
@@ -250,7 +253,7 @@ class _AccountPageState extends State<AccountPage> {
                       );
                     },
               child: Text(
-                _user != null ? 'تسجيل الخروج' : 'تسجيل الدخول',
+                _user != null ? 'Logout' : 'Login',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -261,10 +264,13 @@ class _AccountPageState extends State<AccountPage> {
           ),
           const SizedBox(height: 8),
           // Version
-          const Center(
+          Center(
             child: Text(
-              'الإصدار 1.1.40',
-              style: TextStyle(color: Colors.white54, fontSize: 14),
+              'Version 1.1.40',
+              style: TextStyle(
+                color: isDark ? Colors.white54 : Colors.black38,
+                fontSize: 14,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -274,16 +280,22 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   // Helper for settings tiles
-  Widget _settingsTile(String title, IconData icon) {
+  Widget _settingsTile(
+      String title, IconData icon, bool isDark, Color onSurface) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
-      trailing: Icon(icon, color: Colors.white, size: 22),
+      leading:
+          Icon(icon, color: isDark ? Colors.white : Colors.black87, size: 22),
+      trailing: Icon(Icons.arrow_forward_ios,
+          color: isDark ? Colors.white : Colors.black54, size: 18),
       title: Align(
-        alignment: Alignment.centerRight,
+        alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(
+            color: onSurface,
+            fontSize: 16,
+          ),
         ),
       ),
       onTap: () {},

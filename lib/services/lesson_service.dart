@@ -7,7 +7,7 @@ class LessonService {
   Future<List<dynamic>> getLessonsByModule(String moduleId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.7:5000/api/lessons/module/$moduleId'),
+        Uri.parse('http://localhost:5000/api/lessons/module/$moduleId'),
       );
 
       if (response.statusCode == 200) {
@@ -27,7 +27,7 @@ class LessonService {
   Future<List<dynamic>> getLessonsByCourse(String courseId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.7:5000/api/lessons/course/$courseId'),
+        Uri.parse('http://localhost:5000/api/lessons/course/$courseId'),
       );
 
       if (response.statusCode == 200) {

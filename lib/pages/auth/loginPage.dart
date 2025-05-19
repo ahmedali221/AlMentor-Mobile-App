@@ -15,13 +15,11 @@ class Loginpage extends StatelessWidget {
 
   Loginpage({super.key});
   Future<void> loginUser(BuildContext context) async {
-    // Create a local variable for mounted check
     bool mounted = true;
-    // Use a StatefulBuilder to update mounted if needed (since this is a StatelessWidget, consider refactoring to StatefulWidget for full safety)
     if (_formKey.currentState!.validate()) {
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.1.7:5000/api/auth/login'),
+          Uri.parse('http://localhost:5000/api/auth/login'),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -35,12 +33,16 @@ class Loginpage extends StatelessWidget {
           // Extract JWT token from response
           final responseData = json.decode(response.body);
           final token = responseData['token'];
+          final userData = responseData['user'];
+
           if (token != null) {
             // Use debugPrint instead of print for logging
             debugPrint('Token: $token');
-            // Save token to SharedPreferences
+            debugPrint('User : $userData');
+
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('jwt_token', token);
+            prefs.setString('jwt_token', token);
+            prefs.setString('user', json.encode(userData));
             if (mounted) {
               Navigator.pushReplacementNamed(context, '/home');
             }

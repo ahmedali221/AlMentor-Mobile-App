@@ -62,7 +62,7 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _fetchCategories() async {
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.1.7:5000/api/category'));
+          await http.get(Uri.parse('http://localhost:5000/api/category'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -72,7 +72,7 @@ class _SearchPageState extends State<SearchPage> {
             categories =
                 (data['data'] as List).map<Map<String, dynamic>>((category) {
               final id = category['_id'] ?? '';
-              final name = category['name']?['ar'] ??
+              final name = category['name']?['en'] ??
                   category['name']?['en'] ??
                   'Unknown';
               final randomColor =
@@ -133,33 +133,21 @@ class _SearchPageState extends State<SearchPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'البحث',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-              color: Theme.of(context).primaryColor,
-            ),
-            onPressed: () {
-              themeProvider.toggleTheme();
-            },
-          ),
-        ],
-      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
+          Align(
+            alignment: Alignment.center,
+            child: Text("Explore Categories",
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                )),
+          ),
+          SizedBox(
+            height: 12,
+          ),
           // Search bar
           Container(
             margin: const EdgeInsets.only(bottom: 18),
@@ -182,7 +170,7 @@ class _SearchPageState extends State<SearchPage> {
                         color: Theme.of(context).textTheme.bodyLarge?.color),
                     textAlign: TextAlign.right,
                     decoration: InputDecoration(
-                      hintText: 'ماذا تود أن تتعلم؟',
+                      hintText: 'What do you want to learn?',
                       hintStyle: TextStyle(
                           color: Theme.of(context).hintColor, fontSize: 16),
                       border: InputBorder.none,
@@ -216,7 +204,7 @@ class _SearchPageState extends State<SearchPage> {
               padding: const EdgeInsets.all(32.0),
               child: Center(
                 child: Text(
-                  'لا توجد نتائج',
+                  'No Results found',
                   style: TextStyle(
                       color: Theme.of(context)
                           .textTheme
