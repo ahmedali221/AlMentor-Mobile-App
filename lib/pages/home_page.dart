@@ -7,7 +7,6 @@ import 'profile/account_page.dart';
 import '../pages/clips_page.dart';
 import 'categories/search_page.dart';
 import '../pages/mainPage.dart';
-import 'courses/courses_page.dart';
 import 'ai-chat/ai_mentor_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,11 +17,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 5; // Home is selected by default
+  int _selectedIndex = 4; // Home is selected by default (last index is 4)
 
   final List<Widget> _pages = const [
     AccountPage(),
-    CoursesPage(),
     ClipsPage(),
     SearchPage(),
     Instructors(), // Instructors page
@@ -41,35 +39,30 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _selectedIndex == 4
-          ? AppBar(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              elevation: 0,
-              title: Text(
-                'Almentor',
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
-              ),
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
-                    icon: Icon(Icons.list)),
-                IconButton(
-                  icon: Icon(
-                    themeProvider.isDarkMode
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  onPressed: () {
-                    themeProvider.toggleTheme();
-                  },
-                ),
-              ],
-            )
-          : null,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        title: Text(
+          'Almentor',
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+        ),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              icon: Icon(Icons.list)),
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: Theme.of(context).primaryColor,
+            ),
+            onPressed: () {
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -93,7 +86,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'Your Learning Companion',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withAlpha((0.9 * 255).toInt()),
                       fontSize: 16,
                     ),
                   ),
@@ -176,10 +169,6 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Account',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Courses',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.video_library),

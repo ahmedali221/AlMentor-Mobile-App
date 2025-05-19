@@ -1,3 +1,4 @@
+import 'package:almentor_clone/pages/Lessons/lessonsPage.dart';
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,10 +8,7 @@ import '../../Core/Constants/apiConstants.dart';
 class CategoryCourses extends StatefulWidget {
   final String categoryId;
 
-  const CategoryCourses({
-    super.key,
-    required this.categoryId,
-  });
+  const CategoryCourses({super.key, required this.categoryId});
 
   @override
   State<CategoryCourses> createState() => _CategoryCoursesState();
@@ -29,12 +27,13 @@ class _CategoryCoursesState extends State<CategoryCourses> {
 
   Future<void> fetchCategoryCourses() async {
     try {
-      final response = await http.get(Uri.parse(
-          'http://192.168.1.7:5000/api/courses/category/${widget.categoryId}'));
+      final response = await http.get(
+        Uri.parse(
+            '${ApiConstants.baseUrl}/api/courses/category/${widget.categoryId}'),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print(data[0]);
         if (data is List) {
           setState(() {
             courses = data.cast<Map<String, dynamic>>().toList();
@@ -66,18 +65,18 @@ class _CategoryCoursesState extends State<CategoryCourses> {
     }
   }
 
-  String getLocalizedTitle(Map<String, dynamic> course, Locale locale) {
-    if (locale.languageCode == 'ar' && course['title_ar'] != null) {
-      return course['title_ar'];
-    }
-    return course['title'] ?? '';
-  }
-
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Courses'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+      ),
+      backgroundColor: Colors.grey[100],
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
@@ -90,7 +89,7 @@ class _CategoryCoursesState extends State<CategoryCourses> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.7,
+                        childAspectRatio: 0.68,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                       ),
@@ -101,10 +100,9 @@ class _CategoryCoursesState extends State<CategoryCourses> {
                           course: course,
                           locale: locale,
                           onTap: () {
-                            // Navigate to course details page
                             Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) =>
-                                  CourseDetails(courseId: course['id']),
+                                  LessonsPage(courseId: course['_id']),
                             ));
                           },
                         );
@@ -138,19 +136,23 @@ class CategoryCourseCard extends StatelessWidget {
     final instructor = course['instructor'];
     if (instructor is Map && instructor['user'] is Map) {
       final user = instructor['user'];
-      // Prefer full name if available, else username
       final firstName = user['firstName']?[locale.languageCode] ??
           user['firstName']?['en'] ??
           '';
       final lastName = user['lastName']?[locale.languageCode] ??
           user['lastName']?['en'] ??
           '';
-      if (firstName.isNotEmpty || lastName.isNotEmpty) {
-        return '$firstName $lastName'.trim();
-      }
-      return user['username'] ?? '';
+      return '$firstName $lastName'.trim();
     }
     return '';
+  }
+
+  String? getInstructorImage() {
+    final instructor = course['instructor'];
+    if (instructor is Map && instructor['user'] is Map) {
+      return instructor['user']['profilePicture'];
+    }
+    return null;
   }
 
   @override
@@ -158,73 +160,87 @@ class CategoryCourseCard extends StatelessWidget {
     final title = getLocalizedTitle();
     final thumbnail = course['thumbnail'] ?? '';
     final instructorName = getInstructorUserName();
+    final instructorImage = getInstructorImage();
 
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Course thumbnail
-              Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
                 child: thumbnail.isNotEmpty
                     ? Image.network(
                         thumbnail,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return Image.network(
-                            thumbnail,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          );
+                          return Image.asset('assets/images/placeholder.png');
                         },
                       )
-                    : Image.asset(
-                        'assets/images/placeholder.png',
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                    : Image.asset('assets/images/placeholder.png'),
               ),
-              // Course title and instructor
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Course title
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+            ),
+
+            // Details
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Course title
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      height: 1.4,
                     ),
-                    const SizedBox(height: 6),
-                    // Instructor name
-                    Text(
-                      instructorName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Instructor info
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: instructorImage != null &&
+                                instructorImage.isNotEmpty
+                            ? NetworkImage(instructorImage)
+                            : null,
+                        child: instructorImage == null
+                            ? const Icon(Icons.person,
+                                size: 14, color: Colors.white)
+                            : null,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          instructorName,
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

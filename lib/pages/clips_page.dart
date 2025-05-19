@@ -1,130 +1,160 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Core/Providers/themeProvider.dart';
+import '../models/lesson.dart';
+import '../services/lesson_service.dart';
 
-class ClipsPage extends StatelessWidget {
+class ClipsPage extends StatefulWidget {
   const ClipsPage({super.key});
 
   @override
+  State<ClipsPage> createState() => _ClipsPageState();
+}
+
+class _ClipsPageState extends State<ClipsPage> {
+  final LessonService _lessonService = LessonService();
+  Lesson? randomLesson;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRandomLesson();
+  }
+
+  Future<void> fetchRandomLesson() async {
+    final lessons =
+        await _lessonService.getLessonsByCourse("68229da9d1c55a309691728c");
+    if (lessons.isNotEmpty) {
+      final random = Random();
+      setState(() {
+        randomLesson = Lesson.fromJson(lessons[random.nextInt(lessons.length)]);
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Example data
-    final String subtitle = "إعادة بناء حياتك بعد الطلاق";
-    final String discoverText = "اكتشف المزيد";
-    final String videoImage =
-        "assets/images/teacher2.png"; // Replace with your image asset
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Video/Image
-          Positioned.fill(
-            child: Image.asset(
-              videoImage,
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Centered loading spinner (simulate loading)
-          Center(
-            child: CircularProgressIndicator(
-              color: Theme.of(context).primaryColor,
-              strokeWidth: 3,
-            ),
-          ),
-          // Theme toggle button
-          Positioned(
-            top: 40,
-            right: 16,
-            child: IconButton(
-              icon: Icon(
-                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                color: Colors.white,
+      body: isLoading || randomLesson == null
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+                strokeWidth: 3,
               ),
-              onPressed: () {
-                themeProvider.toggleTheme();
-              },
-            ),
-          ),
-          // Bottom overlays
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 90,
-            child: Column(
+            )
+          : Stack(
               children: [
-                // Subtitle
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    subtitle,
-                    style: const TextStyle(
+                // Background image or fallback
+                Positioned.fill(
+                  child: randomLesson!.videoUrl != null
+                      ? Image.asset(
+                          'assets/images/teacher2.png', // Can be thumbnail later
+                          fit: BoxFit.cover,
+                        )
+                      : Container(color: Colors.grey[900]),
+                ),
+
+                // Theme toggle
+                Positioned(
+                  top: 40,
+                  right: 16,
+                  child: IconButton(
+                    icon: Icon(
+                      themeProvider.isDarkMode
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
                     ),
-                    textAlign: TextAlign.center,
+                    onPressed: () {
+                      themeProvider.toggleTheme();
+                    },
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Discover more button
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 80),
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                // Subtitle + Button
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 90,
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          randomLesson!.getLocalizedTitle("ar"),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    onPressed: () {},
-                    child: Text(
-                      discoverText,
-                      style: const TextStyle(fontSize: 15, color: Colors.white),
-                    ),
+                      const SizedBox(height: 8),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 80),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          onPressed: () {},
+                          child: const Text("اكتشف المزيد",
+                              style:
+                                  TextStyle(fontSize: 15, color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Left side buttons
+                Positioned(
+                  left: 12,
+                  bottom: 110,
+                  child: Column(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.favorite_border,
+                            color: Colors.white, size: 32),
+                        onPressed: () {},
+                      ),
+                      const Text('اعجبني',
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                      const SizedBox(height: 18),
+                      IconButton(
+                        icon: const Icon(Icons.share,
+                            color: Colors.white, size: 32),
+                        onPressed: () {},
+                      ),
+                      const Text('مشاركة',
+                          style: TextStyle(color: Colors.white, fontSize: 14)),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          // Left side buttons (Like, Share)
-          Positioned(
-            left: 12,
-            bottom: 110,
-            child: Column(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.favorite_border,
-                      color: Colors.white, size: 32),
-                  onPressed: () {},
-                ),
-                const Text(
-                  'اعجبني',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-                const SizedBox(height: 18),
-                IconButton(
-                  icon: const Icon(Icons.share, color: Colors.white, size: 32),
-                  onPressed: () {},
-                ),
-                const Text(
-                  'مشاركة',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

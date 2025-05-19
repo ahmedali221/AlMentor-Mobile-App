@@ -1,9 +1,9 @@
+import 'package:almentor_clone/Core/Custom%20Widgets/instructor_card.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../../models/instructor.dart';
-import 'package:almentor_clone/Core/Constants/apiConstants.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'instructor_details.dart';
 
@@ -64,7 +64,6 @@ class _InstructorsState extends State<Instructors> {
     setState(() {
       currentPage = newPage;
     });
-    // Scroll to top when page changes
     _scrollController.animateTo(
       0,
       duration: const Duration(milliseconds: 500),
@@ -103,7 +102,19 @@ class _InstructorsState extends State<Instructors> {
                     padding: const EdgeInsets.all(16),
                     itemCount: currentInstructors.length,
                     itemBuilder: (context, index) {
-                      return _buildInstructorCard(currentInstructors[index]);
+                      return InstructorCard(
+                        instructor: currentInstructors[index],
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => InstructorDetailsPage(
+                                instructor: currentInstructors[index],
+                              ),
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
 
@@ -156,12 +167,11 @@ class _InstructorsState extends State<Instructors> {
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.6),
-                      image: DecorationImage(
-                        image:
-                            const AssetImage('assets/images/instructor_bg.jpg'),
+                      image: const DecorationImage(
+                        image: AssetImage('assets/images/instructor_bg.jpg'),
                         fit: BoxFit.cover,
                         colorFilter: ColorFilter.mode(
-                          Colors.black.withOpacity(0.5),
+                          Colors.black54,
                           BlendMode.darken,
                         ),
                       ),
@@ -209,73 +219,6 @@ class _InstructorsState extends State<Instructors> {
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildInstructorCard(Instructor instructor) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    return Card(
-      color: Theme.of(context).cardColor,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  InstructorDetailsPage(instructor: instructor),
-            ),
-          );
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            instructor.profilePicture.isNotEmpty
-                ? CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(instructor.profilePicture),
-                    onBackgroundImageError: (e, s) => const Icon(Icons.person),
-                  )
-                : CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Theme.of(context).primaryColor,
-                    child: Text(
-                      '${instructor.firstName[0]}${instructor.lastName[0]}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-            const SizedBox(height: 12),
-            Text(
-              '${instructor.firstName} ${instructor.lastName}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              instructor.professionalTitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.color
-                    ?.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
     );
   }
 

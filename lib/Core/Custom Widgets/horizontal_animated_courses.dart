@@ -25,25 +25,17 @@ class HorizontalAnimatedCourses extends StatefulWidget {
 class _HorizontalAnimatedCoursesState extends State<HorizontalAnimatedCourses>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 900),
     );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Start the animation when the widget is first built
+    _fadeAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
   }
 
@@ -55,8 +47,8 @@ class _HorizontalAnimatedCoursesState extends State<HorizontalAnimatedCourses>
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _slideAnimation,
+    return FadeTransition(
+      opacity: _fadeAnimation,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -88,37 +80,39 @@ class _HorizontalAnimatedCoursesState extends State<HorizontalAnimatedCourses>
             ),
           SizedBox(
             height: 300,
-            child: CarouselSlider(
-              options: CarouselOptions(
-                height: 300,
-                enableInfiniteScroll: false,
-                viewportFraction: 0.45,
-                enlargeCenterPage: true,
-                enlargeStrategy: CenterPageEnlargeStrategy.height,
-                enlargeFactor: 0.15,
-                scrollPhysics: const BouncingScrollPhysics(),
-                pageSnapping: true,
-                scrollDirection: Axis.horizontal,
-                autoPlay: false,
-              ),
-              items: widget.courses.map((course) {
-                return Builder(
-                  builder: (context) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 2, vertical: 4),
-                      child: AnimatedCourseCard(
-                        course: course,
-                        onTap: () {
-                          if (widget.onCourseTap != null) {
-                            widget.onCourseTap!(course);
-                          }
-                        },
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: widget.courses.length,
+              itemBuilder: (context, index) {
+                final delay = 100 * index;
+                return AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final animationValue = _controller.value;
+                    final shouldShow = animationValue > (index * 0.08);
+                    return AnimatedOpacity(
+                      opacity: shouldShow ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 400),
+                      child: Transform.translate(
+                        offset: Offset(shouldShow ? 0 : 40, 0),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 8),
+                          child: AnimatedCourseCard(
+                            course: widget.courses[index],
+                            onTap: () {
+                              if (widget.onCourseTap != null) {
+                                widget.onCourseTap!(widget.courses[index]);
+                              }
+                            },
+                          ),
+                        ),
                       ),
                     );
                   },
                 );
-              }).toList(),
+              },
             ),
           ),
         ],

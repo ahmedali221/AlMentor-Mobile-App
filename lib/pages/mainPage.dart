@@ -12,7 +12,6 @@ import '../Core/Custom Widgets/horizontal_animated_courses.dart';
 import '../data/home_demo_data.dart';
 import '../models/course.dart';
 import '../services/course_service.dart';
-import 'courses/courses_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -67,11 +66,7 @@ class _MainPageState extends State<MainPage> {
               SectionTitle(
                 title: 'الدورات الشائعة',
                 onSeeAllPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CoursesPage()),
-                  );
+                  print("object");
                 },
               ),
               SectionDescription(
@@ -122,12 +117,7 @@ class _MainPageState extends State<MainPage> {
                     title: 'دورات مميزة',
                     description: 'دورات تدريبية مختارة خصيصاً لك',
                     onCourseTap: (course) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CourseDetails(course: course),
-                        ),
-                      );
+                      print("object");
                     },
                   );
                 },

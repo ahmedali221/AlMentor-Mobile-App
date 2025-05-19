@@ -1,9 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Core/Providers/themeProvider.dart';
+import '../../services/auth_service.dart';
+import '../../models/user.dart'; // Make sure this is your new User model
+import '../auth/loginPage.dart';
 
-class AccountPage extends StatelessWidget {
+class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
+
+  @override
+  State<AccountPage> createState() => _AccountPageState();
+}
+
+class _AccountPageState extends State<AccountPage> {
+  final AuthService _authService = AuthService();
+  User? _user;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = await _authService.getCurrentUser();
+      setState(() {
+        _user = user;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await _authService.logout();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => Loginpage()),
+        (route) => false,
+      );
+    } catch (e) {
+      print('Error during logout: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +88,61 @@ class AccountPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
           const SizedBox(height: 12),
-          // Profile Avatar
-          CircleAvatar(
-            radius: 48,
-            backgroundColor:
-                Theme.of(context).colorScheme.surface.withOpacity(0.2),
-            child: Icon(Icons.person,
-                size: 64,
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.5)),
-          ),
+          // Profile Avatar and User Info
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withOpacity(0.2),
+                      backgroundImage: _user?.profilePicture != null &&
+                              _user!.profilePicture.isNotEmpty
+                          ? NetworkImage(_user!.profilePicture)
+                          : null,
+                      child: _user?.profilePicture == null ||
+                              _user!.profilePicture.isEmpty
+                          ? Icon(Icons.person,
+                              size: 64,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(0.5))
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_user != null) ...[
+                      Text(
+                        _user!.username,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _user!.email,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        // Display full name in Arabic as an example
+                        '${_user!.firstNameAr} ${_user!.lastNameAr}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
           const SizedBox(height: 18),
           // Red Card
           Container(
@@ -160,7 +255,7 @@ class AccountPage extends StatelessWidget {
           _settingsTile('سياسة الخصوصية', Icons.lock_outline),
           _settingsTile('المساعدة', Icons.info_outline),
           const SizedBox(height: 18),
-          // Login Button
+          // Login/Logout Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -171,10 +266,16 @@ class AccountPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () {},
-              child: const Text(
-                'تسجيل الدخول',
-                style: TextStyle(
+              onPressed: _user != null
+                  ? _logout
+                  : () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => Loginpage()),
+                      );
+                    },
+              child: Text(
+                _user != null ? 'تسجيل الخروج' : 'تسجيل الدخول',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

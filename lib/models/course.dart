@@ -1,49 +1,51 @@
+import 'package:almentor_clone/models/instructor.dart';
+import 'package:almentor_clone/models/module.dart';
 import 'package:flutter/material.dart';
 
 class Course {
   final String id;
-  final Map<String, String> title; // {en: String, ar: String}
-  final Map<String, String> slug; // {en: String, ar: String}
-  final String topicId;
-  final String? subtopicId;
-  final String instructorId;
-  final String categoryId;
+  final Map<String, String> title;
+  final Map<String, String> slug;
+  final Map<String, String> description;
+  final Map<String, String>? shortDescription;
+  final Map<String, String> level;
+  final Map<String, String> language;
   final String thumbnail;
-  final Map<String, String> description; // {en: String, ar: String}
-  final Map<String, String>? shortDescription; // {en: String, ar: String}
-  final List<String> moduleIds;
-  final List<FreeLesson> freeLessons;
-  final Map<String, String> level; // {en: String, ar: String}
-  final Map<String, String> language; // {en: String, ar: String}
   final int duration;
-  final DateTime lastUpdated;
   final int enrollmentCount;
   final bool isFree;
   final Rating rating;
+  final DateTime lastUpdated;
+
+  final String topicId;
+  final String? subtopicId;
+  final String categoryId;
+  final List<Module> modules;
+  final List<FreeLesson> freeLessons;
+  final Instructor instructor;
 
   Course({
     required this.id,
     required this.title,
     required this.slug,
-    required this.topicId,
-    this.subtopicId,
-    required this.instructorId,
-    required this.categoryId,
-    required this.thumbnail,
     required this.description,
     this.shortDescription,
-    required this.moduleIds,
-    required this.freeLessons,
     required this.level,
     required this.language,
+    required this.thumbnail,
     required this.duration,
-    required this.lastUpdated,
     required this.enrollmentCount,
     required this.isFree,
     required this.rating,
+    required this.lastUpdated,
+    required this.topicId,
+    this.subtopicId,
+    required this.categoryId,
+    required this.modules,
+    required this.freeLessons,
+    required this.instructor,
   });
 
-  // Factory constructor to create a Course from JSON data
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
       id: json['_id'] ?? '',
@@ -55,11 +57,6 @@ class Course {
         'en': json['slug']['en'] ?? '',
         'ar': json['slug']['ar'] ?? '',
       },
-      topicId: json['topic'] ?? '',
-      subtopicId: json['subtopic'],
-      instructorId: json['instructor'] ?? '',
-      categoryId: json['category'] ?? '',
-      thumbnail: json['thumbnail'] ?? '',
       description: {
         'en': json['description']['en'] ?? '',
         'ar': json['description']['ar'] ?? '',
@@ -70,12 +67,6 @@ class Course {
               'ar': json['shortDescription']['ar'] ?? '',
             }
           : null,
-      moduleIds:
-          json['modules'] != null ? List<String>.from(json['modules']) : [],
-      freeLessons: json['freeLessons'] != null
-          ? List<FreeLesson>.from(
-              json['freeLessons'].map((x) => FreeLesson.fromJson(x)))
-          : [],
       level: {
         'en': json['level']['en'] ?? 'beginner',
         'ar': json['level']['ar'] ?? 'مبتدئ',
@@ -84,46 +75,79 @@ class Course {
         'en': json['language']['en'] ?? 'Arabic',
         'ar': json['language']['ar'] ?? 'العربية',
       },
-      duration: json['duration'] ?? 0,
+      thumbnail: json['thumbnail'] ?? '',
+      duration: json['duration'] != null
+          ? (json['duration'] is int
+              ? json['duration']
+              : int.tryParse(json['duration'].toString()) ?? 0)
+          : 0,
+      enrollmentCount: json['enrollmentCount'] != null
+          ? (json['enrollmentCount'] is int
+              ? json['enrollmentCount']
+              : int.tryParse(json['enrollmentCount'].toString()) ?? 0)
+          : 0,
+      isFree: json['isFree'] ?? false,
+      rating: Rating.fromJson(json['rating'] ?? {'average': 0, 'count': 0}),
       lastUpdated: json['lastUpdated'] != null
           ? DateTime.parse(json['lastUpdated'])
           : DateTime.now(),
-      enrollmentCount: json['enrollmentCount'] ?? 0,
-      isFree: json['isFree'] ?? false,
-      rating: Rating.fromJson(json['rating'] ?? {'average': 0, 'count': 0}),
+      topicId: json['topic'] ?? '',
+      subtopicId: json['subtopic'],
+      categoryId: json['category'] ?? '',
+      modules: json['modules'] != null
+          ? List<Module>.from(json['modules'].map((x) => Module.fromJson(x)))
+          : [],
+      freeLessons: json['freeLessons'] != null
+          ? List<FreeLesson>.from(
+              json['freeLessons'].map((x) => FreeLesson.fromJson(x)))
+          : [],
+      instructor: Instructor.fromJson(json['instructor']),
     );
   }
 
-  // Get localized title based on current locale
-  String getLocalizedTitle(Locale locale) {
-    return title[locale.languageCode] ?? title['en'] ?? '';
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'slug': slug,
+      'description': description,
+      'shortDescription': shortDescription,
+      'level': level,
+      'language': language,
+      'thumbnail': thumbnail,
+      'duration': duration,
+      'enrollmentCount': enrollmentCount,
+      'isFree': isFree,
+      'rating': rating.toJson(),
+      'lastUpdated': lastUpdated.toIso8601String(),
+      'topicId': topicId,
+      'subtopicId': subtopicId,
+      'categoryId': categoryId,
+      'modules': modules.map((m) => m.toJson()).toList(),
+      'freeLessons': freeLessons.map((l) => l.toJson()).toList(),
+      'instructor': instructor.toJson(), // Call toJson() on the instructor object
+    };
   }
 
-  // Get localized description based on current locale
-  String getLocalizedDescription(Locale locale) {
-    return description[locale.languageCode] ?? description['en'] ?? '';
-  }
+  String getLocalizedTitle(Locale locale) =>
+      title[locale.languageCode] ?? title['en'] ?? '';
 
-  // Get localized short description based on current locale
-  String? getLocalizedShortDescription(Locale locale) {
-    if (shortDescription == null) return null;
-    return shortDescription![locale.languageCode] ?? shortDescription!['en'];
-  }
+  String getLocalizedDescription(Locale locale) =>
+      description[locale.languageCode] ?? description['en'] ?? '';
 
-  // Get localized level based on current locale
-  String getLocalizedLevel(Locale locale) {
-    return level[locale.languageCode] ?? level['en'] ?? '';
-  }
+  String? getLocalizedShortDescription(Locale locale) =>
+      shortDescription?[locale.languageCode] ?? shortDescription?['en'];
 
-  // Get localized language based on current locale
-  String getLocalizedLanguage(Locale locale) {
-    return language[locale.languageCode] ?? language['en'] ?? '';
-  }
+  String getLocalizedLevel(Locale locale) =>
+      level[locale.languageCode] ?? level['en'] ?? '';
+
+  String getLocalizedLanguage(Locale locale) =>
+      language[locale.languageCode] ?? language['en'] ?? '';
 }
 
 class FreeLesson {
   final String lessonId;
-  final String title;
+  final Map<String, String> title;
   final int duration;
 
   FreeLesson({
@@ -135,9 +159,23 @@ class FreeLesson {
   factory FreeLesson.fromJson(Map<String, dynamic> json) {
     return FreeLesson(
       lessonId: json['lessonId'] ?? '',
-      title: json['title'] ?? '',
+      title: json['title'] is Map
+          ? Map<String, String>.from(json['title'])
+          : {'en': json['title'] ?? '', 'ar': json['title'] ?? ''},
       duration: json['duration'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'lessonId': lessonId,
+      'title': title,
+      'duration': duration,
+    };
+  }
+
+  String getLocalizedTitle(Locale locale) {
+    return title[locale.languageCode] ?? title['en'] ?? '';
   }
 }
 
@@ -155,5 +193,12 @@ class Rating {
       average: (json['average'] ?? 0).toDouble(),
       count: json['count'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'average': average,
+      'count': count,
+    };
   }
 }
