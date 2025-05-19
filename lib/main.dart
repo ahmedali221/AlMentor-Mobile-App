@@ -1,3 +1,4 @@
+import 'package:almentor_clone/Core/Routes/route_generator.dart';
 import 'package:almentor_clone/models/payment_model.dart';
 import 'package:almentor_clone/pages/categories/categoryCourses.dart';
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
@@ -77,6 +78,8 @@ class _MyAppState extends State<MyApp> {
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: initialRoute,
+          onGenerateRoute: RouteGenerator.generateRoute,
+          navigatorObservers: [RouteObserver()],
           routes: {
             '/login': (context) => Loginpage(),
             '/signup': (context) => SignUpPage(),
@@ -86,14 +89,38 @@ class _MyAppState extends State<MyApp> {
             '/clips': (context) => const ClipsPage(),
             '/search': (context) => const SearchPage(),
             '/subscribe': (context) => const SubscribePage(),
-            '/credit_card_payment': (context) {
-              final payment =
-                  ModalRoute.of(context)!.settings.arguments as PaymentModel;
-              return CraditPayment(payment: payment);
-            },
           },
         );
       },
     );
+  }
+}
+
+class RouteObserver extends NavigatorObserver {
+  final AuthService _authService = AuthService();
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    _checkProtectedRoute(route);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    if (newRoute != null) _checkProtectedRoute(newRoute);
+  }
+
+  void _checkProtectedRoute(Route<dynamic> route) {
+    // Add protected route names here
+    final protectedRoutes = ['/lessons_viewer'];
+
+    if (protectedRoutes.contains(route.settings.name)) {
+      _authService.isLoggedIn().then((isLoggedIn) {
+        if (!isLoggedIn) {
+          Navigator.of(route.navigator!.context).pushReplacementNamed('/login');
+        }
+      });
+    }
   }
 }

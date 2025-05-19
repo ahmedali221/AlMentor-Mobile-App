@@ -1,3 +1,4 @@
+import 'package:almentor_clone/Core/Guards/auth_guard.dart';
 import 'package:almentor_clone/models/module.dart';
 import 'package:almentor_clone/pages/courses/lessonsViewr.dart';
 import 'package:flutter/material.dart';
@@ -50,11 +51,13 @@ class _CourseDetailsState extends State<CourseDetails>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => LessonViewerPage(
-            course: course!,
-            modules: modules,
-            lessons: lessons,
-            initialIndex: index,
+          builder: (_) => AuthGuard(
+            child: LessonViewerPage(
+              course: course!,
+              modules: modules,
+              lessons: lessons,
+              initialIndex: index,
+            ),
           ),
         ),
       );
@@ -357,7 +360,7 @@ class _CourseDetailsState extends State<CourseDetails>
           Divider(),
           Text('Instructor', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Column(
+          Row(
             children: [
               CircleAvatar(
                 backgroundImage:

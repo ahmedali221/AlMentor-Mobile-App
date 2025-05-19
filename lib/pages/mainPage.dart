@@ -1,4 +1,5 @@
 import 'package:almentor_clone/Core/Custom%20Widgets/Home%20Page%20Widgets/homewidgets.dart';
+import 'package:almentor_clone/Core/Delegates/search_delegate.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -101,30 +102,61 @@ class _MainPageState extends State<MainPage> {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[850] : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                child: GestureDetector(
+                  onTap: () async {
+                    // Wait for all data to be loaded
+                    final courses = await _coursesFuture;
+                    final programs = await _programsFuture;
+                    final instructors = await _instructorsFuture;
+
+                    if (!mounted) return;
+
+                    final selectedId = await showSearch(
+                      context: context,
+                      delegate: AlmentorSearchDelegate(
+                        courses: courses,
+                        programs: programs,
+                        instructors: instructors,
+                        isDark: isDark,
+                        locale: locale,
                       ),
-                    ],
-                  ),
-                  child: TextField(
-                    style:
-                        TextStyle(color: isDark ? Colors.white : Colors.black),
-                    decoration: InputDecoration(
-                      hintText: "Search for courses, programs, instructors...",
-                      hintStyle: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    );
+
+                    if (selectedId != null && selectedId.isNotEmpty) {
+                      // Handle navigation based on the selected item
+                      // You can determine the type by checking the lists
+                      // and navigate accordingly
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey[850] : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      enabled: false, // Disable actual text input
+                      style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        hintText:
+                            "Search for courses, programs, instructors...",
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(Icons.search,
+                            color:
+                                isDark ? Colors.grey[400] : Colors.grey[600]),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      border: InputBorder.none,
-                      prefixIcon: Icon(Icons.search,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600]),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
                 ),
@@ -264,44 +296,6 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(
-      BuildContext context, IconData icon, String title, bool isDark) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 30,
-            color: Theme.of(context).primaryColor,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black,
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

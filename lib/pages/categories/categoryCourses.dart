@@ -2,7 +2,9 @@ import 'package:almentor_clone/pages/courses/coursesDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:provider/provider.dart';
 import '../../Core/Constants/apiConstants.dart';
+import '../../Core/Providers/themeProvider.dart';
 
 class CategoryCourses extends StatefulWidget {
   final String categoryId;
@@ -67,22 +69,51 @@ class _CategoryCoursesState extends State<CategoryCourses> {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Courses'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
+        title: Text(
+          'Courses',
+          style: theme.textTheme.titleLarge,
+        ),
+        centerTitle: true,
       ),
-      backgroundColor: Colors.grey[100],
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: theme.primaryColor,
+              ),
+            )
           : errorMessage.isNotEmpty
-              ? Center(child: Text(errorMessage))
+              ? Center(
+                  child: Text(
+                    errorMessage,
+                    style: theme.textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                )
               : courses.isEmpty
-                  ? const Center(
-                      child: Text('No courses found for this category'))
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.school_outlined,
+                            size: 64,
+                            color: isDark ? Colors.white38 : Colors.black26,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No courses found for this category',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : GridView.builder(
                       padding: const EdgeInsets.all(16),
                       gridDelegate:
@@ -156,6 +187,9 @@ class CategoryCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final title = getLocalizedTitle();
     final thumbnail = course['thumbnail'] ?? '';
     final instructorName = getInstructorUserName();
@@ -165,72 +199,120 @@ class CategoryCourseCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black26 : Colors.black12,
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: thumbnail.isNotEmpty
-                    ? Image.network(
-                        thumbnail,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset('assets/images/placeholder.png');
-                        },
-                      )
-                    : Image.asset('assets/images/placeholder.png'),
-              ),
+            // Thumbnail with overlay gradient
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: thumbnail.isNotEmpty
+                        ? Image.network(
+                            thumbnail,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: isDark
+                                    ? Colors.grey[850]
+                                    : Colors.grey[200],
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color:
+                                      isDark ? Colors.white24 : Colors.black26,
+                                  size: 32,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: isDark ? Colors.grey[850] : Colors.grey[200],
+                            child: Icon(
+                              Icons.image_outlined,
+                              color: isDark ? Colors.white24 : Colors.black26,
+                              size: 32,
+                            ),
+                          ),
+                  ),
+                ),
+                // Add subtle gradient overlay
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(12)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-            // Details
+            // Course details
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Course title
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: 14,
                       height: 1.4,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
-                  // Instructor info
+                  // Instructor info with improved styling
                   Row(
                     children: [
                       CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.grey[300],
+                        radius: 14,
+                        backgroundColor:
+                            isDark ? Colors.grey[800] : Colors.grey[200],
                         backgroundImage: instructorImage != null &&
                                 instructorImage.isNotEmpty
                             ? NetworkImage(instructorImage)
                             : null,
-                        child: instructorImage == null
-                            ? const Icon(Icons.person,
-                                size: 14, color: Colors.white)
+                        child: instructorImage == null ||
+                                instructorImage.isEmpty
+                            ? Icon(
+                                Icons.person,
+                                size: 16,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           instructorName,
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark ? Colors.white70 : Colors.grey[700],
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

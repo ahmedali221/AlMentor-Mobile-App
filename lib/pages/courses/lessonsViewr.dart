@@ -120,200 +120,310 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final locale = Localizations.localeOf(context);
+
     final lesson = widget.lessons[currentIndex];
     final previousLessons = widget.lessons.sublist(0, currentIndex);
     final nextLessons = widget.lessons.sublist(currentIndex + 1);
-
     final progress = (currentIndex + 1) / widget.lessons.length;
 
+    final currentModule = getCurrentModule();
     final previousModule = getPreviousModule();
     final nextModule = getNextModule();
-    final currentModule = getCurrentModule();
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Colors.black,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(lesson.getLocalizedTitle(Localizations.localeOf(context))),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_chewieController != null &&
-                  _chewieController!.videoPlayerController.value.isInitialized)
-                AspectRatio(
-                  aspectRatio: _videoPlayerController!.value.aspectRatio,
-                  child: Chewie(controller: _chewieController!),
-                )
-              else
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text(
-                  lesson.getLocalizedTitle(Localizations.localeOf(context)),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              // Progress bar
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        backgroundColor: Colors.grey[300],
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text("${((progress) * 100).toStringAsFixed(0)}%"),
-                  ],
-                ),
-              ),
-              // Module navigation
-              if (previousModule != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.arrow_upward),
-                    title: Text(
-                      "Previous Module: ${previousModule.getLocalizedTitle(Localizations.localeOf(context) as String)}",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    onTap: () {
-                      // Go to first lesson of previous module
-                      final firstLessonId = previousModule.lessons.first.id;
-                      final idx = widget.lessons
-                          .indexWhere((l) => l.id == firstLessonId);
-                      if (idx != -1) _changeLesson(idx);
-                    },
-                  ),
-                ),
-              if (currentModule != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.folder),
-                    title: Text(
-                      "Current Module: ${currentModule.getLocalizedTitle(Localizations.localeOf(context) as String)}",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                ),
-              if (nextModule != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.arrow_downward),
-                    title: Text(
-                      "Next Module: ${nextModule.getLocalizedTitle(Localizations.localeOf(context) as String)}",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    onTap: () {
-                      // Go to first lesson of next module
-                      final firstLessonId = nextModule.lessons.first.id;
-                      final idx = widget.lessons
-                          .indexWhere((l) => l.id == firstLessonId);
-                      if (idx != -1) _changeLesson(idx);
-                    },
-                  ),
-                ),
-              // Navigation buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton.icon(
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text("Previous"),
-                      onPressed: currentIndex > 0
-                          ? () => _changeLesson(currentIndex - 1)
-                          : null,
-                    ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.arrow_forward),
-                      label: Text(
-                        currentIndex == widget.lessons.length - 1
-                            ? "Finish"
-                            : "Next",
-                      ),
-                      onPressed: _onNextPressed,
-                    ),
-                  ],
-                ),
-              ),
-              // Previous Lessons List (vertical)
-              if (previousLessons.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: Text(
-                    "Previous Lessons",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              if (previousLessons.isNotEmpty)
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: previousLessons.length,
-                  itemBuilder: (context, index) {
-                    final idx = index;
-                    final prevLesson = previousLessons[idx];
-                    return Card(
-                      color: Colors.grey[100],
-                      child: ListTile(
-                        leading: const Icon(Icons.play_circle_outline),
-                        title: Text(prevLesson.getLocalizedTitle(
-                            Localizations.localeOf(context))),
-                        onTap: () => _changeLesson(idx),
-                      ),
-                    );
-                  },
-                ),
-              // Next Lessons List (vertical)
-              if (nextLessons.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: Text(
-                    "Next Lessons",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              if (nextLessons.isNotEmpty)
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: nextLessons.length,
-                  itemBuilder: (context, index) {
-                    final idx = currentIndex + 1 + index;
-                    final nextLesson = nextLessons[index];
-                    return Card(
-                      color: Colors.grey[100],
-                      child: ListTile(
-                        leading: const Icon(Icons.play_circle_outline),
-                        title: Text(nextLesson.getLocalizedTitle(
-                            Localizations.localeOf(context))),
-                        onTap: () => _changeLesson(idx),
-                      ),
-                    );
-                  },
-                ),
-              const SizedBox(height: 24),
-            ],
+        title: Text(
+          lesson.getLocalizedTitle(locale),
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: isDark ? Colors.white : Colors.black,
           ),
+        ),
+      ),
+      body: Column(
+        children: [
+          // Video Player Section
+          Container(
+            color: Colors.black,
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: _chewieController != null &&
+                      _chewieController!
+                          .videoPlayerController.value.isInitialized
+                  ? Chewie(controller: _chewieController!)
+                  : const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFeb2027),
+                      ),
+                    ),
+            ),
+          ),
+
+          // Content Section
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                // Course Progress
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          lesson.getLocalizedTitle(locale),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 8,
+                                backgroundColor: isDark
+                                    ? Colors.grey[800]
+                                    : Colors.grey[200],
+                                color: const Color(0xFFeb2027),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "${(progress * 100).toStringAsFixed(0)}%",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color:
+                                    isDark ? Colors.white70 : Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Module Navigation
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        if (previousModule != null)
+                          _buildModuleNavItem(
+                            context,
+                            Icons.arrow_upward,
+                            "Previous Module",
+                            previousModule,
+                            () {
+                              final firstLessonId =
+                                  previousModule.lessons.first.id;
+                              final idx = widget.lessons
+                                  .indexWhere((l) => l.id == firstLessonId);
+                              if (idx != -1) _changeLesson(idx);
+                            },
+                          ),
+                        if (currentModule != null)
+                          _buildModuleNavItem(
+                            context,
+                            Icons.folder,
+                            "Current Module",
+                            currentModule,
+                            null,
+                          ),
+                        if (nextModule != null)
+                          _buildModuleNavItem(
+                            context,
+                            Icons.arrow_downward,
+                            "Next Module",
+                            nextModule,
+                            () {
+                              final firstLessonId = nextModule.lessons.first.id;
+                              final idx = widget.lessons
+                                  .indexWhere((l) => l.id == firstLessonId);
+                              if (idx != -1) _changeLesson(idx);
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Lessons Lists
+                if (previousLessons.isNotEmpty)
+                  _buildLessonsList(
+                    context,
+                    "Previous Lessons",
+                    previousLessons,
+                    isDark,
+                    (index) => _changeLesson(index),
+                  ),
+
+                if (nextLessons.isNotEmpty)
+                  _buildLessonsList(
+                    context,
+                    "Next Lessons",
+                    nextLessons,
+                    isDark,
+                    (index) => _changeLesson(currentIndex + 1 + index),
+                  ),
+
+                const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+              ],
+            ),
+          ),
+        ],
+      ),
+
+      // Bottom Navigation Bar
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              offset: const Offset(0, -2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.arrow_back),
+              label: const Text("Previous"),
+              onPressed: currentIndex > 0
+                  ? () => _changeLesson(currentIndex - 1)
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFeb2027),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey,
+              ),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.arrow_forward),
+              label: Text(
+                currentIndex == widget.lessons.length - 1 ? "Finish" : "Next",
+              ),
+              onPressed: _onNextPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFeb2027),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModuleNavItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Module module,
+    VoidCallback? onTap,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDark ? Colors.white70 : Colors.grey[700],
+      ),
+      title: Text(
+        "$label: ${module.getLocalizedTitle(Localizations.localeOf(context) as String)}",
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildLessonsList(
+    BuildContext context,
+    String title,
+    List<Lesson> lessons,
+    bool isDark,
+    Function(int) onTap,
+  ) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                ),
+              );
+            }
+
+            final lesson = lessons[index - 1];
+            return Card(
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Icon(
+                  Icons.play_circle_outline,
+                  color: isDark ? Colors.white70 : Colors.grey[700],
+                ),
+                title: Text(
+                  lesson.getLocalizedTitle(Localizations.localeOf(context)),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                ),
+                onTap: () => onTap(index - 1),
+              ),
+            );
+          },
+          childCount: lessons.length + 1,
         ),
       ),
     );
