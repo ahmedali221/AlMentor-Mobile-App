@@ -179,7 +179,9 @@ class _AccountPageState extends State<AccountPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/subscribe');
+                          },
                           icon: const Icon(Icons.arrow_forward, size: 18),
                           label: const Text('Subscribe Now'),
                         ),

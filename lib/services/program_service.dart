@@ -20,17 +20,20 @@ class ProgramService {
     } catch (e) {
       print("Error fetching programs: $e");
       // Return demo data for now
-      return Program.getDemoPrograms();
+      throw Exception('Failed to load programs');
     }
   }
 
   // Get program by ID
   Future<Program> getProgramById(String id) async {
+    print("Fetching program with ID: $id");
     try {
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/api/programs/$id'),
       );
-
+      // print("Response status code: ${response.statusCode}");
+      // print("Response body: ${response.body}");
+      // print(Program.fromJson(json.decode(response.body)));
       if (response.statusCode == 200) {
         return Program.fromJson(json.decode(response.body));
       } else {
@@ -38,7 +41,7 @@ class ProgramService {
       }
     } catch (e) {
       // Return a demo program for now
-      return Program.getDemoPrograms().first;
+      throw Exception('Failed to load programs');
     }
   }
 }

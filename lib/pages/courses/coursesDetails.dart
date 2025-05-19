@@ -1,8 +1,7 @@
 import 'package:almentor_clone/models/module.dart';
 import 'package:almentor_clone/pages/courses/lessonsViewr.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
 import '../../models/course.dart';
 import '../../models/lesson.dart';
 import '../../services/course_service.dart';
@@ -358,7 +357,7 @@ class _CourseDetailsState extends State<CourseDetails>
           Divider(),
           Text('Instructor', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Row(
+          Column(
             children: [
               CircleAvatar(
                 backgroundImage:
@@ -371,12 +370,14 @@ class _CourseDetailsState extends State<CourseDetails>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course!.instructor.user.firstNameEn,
+                      // Combine first and last name for full name
+                      '${course!.instructor.user.firstNameEn} ${course!.instructor.user.lastNameEn}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      course!.instructor.biographyEn ?? 'No bio available',
+                      // Show professional title from Instructor model
+                      course!.instructor.professionalTitleEn,
                       style: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey[700]),
                     ),

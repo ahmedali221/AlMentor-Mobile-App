@@ -1,31 +1,133 @@
-import 'package:almentor_clone/pages/subs%20and%20payment/payment.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:almentor_clone/models/payment_model.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CreditCardPayment extends StatefulWidget {
+class CraditPayment extends StatefulWidget {
   final PaymentModel payment;
 
-  const CreditCardPayment({super.key, required this.payment});
+  const CraditPayment({super.key, required this.payment});
 
   @override
-  _CreditCardPaymentState createState() => _CreditCardPaymentState();
+  _CraditPaymentState createState() => _CraditPaymentState();
 }
 
-class _CreditCardPaymentState extends State<CreditCardPayment> {
+class _CraditPaymentState extends State<CraditPayment> {
   int _selectedPaymentOption = -1;
   bool _showPromoCode = false;
   final TextEditingController _promoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  Future<void> _startStripePayment() async {
+    final amount = (widget.payment.amount * 100).toInt();
+    final currency = widget.payment.currency;
+
+    try {
+      print('Starting payment process...');
+      print('Amount: $amount');
+      print('Currency: $currency');
+
+      // Get user token
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+      final userId = prefs.getString('user_id');
+
+      print('Token: ${token != null ? 'exists' : 'null'}');
+      print('UserId: $userId');
+
+      if (token == null || userId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // First create the payment record
+      print('Creating payment record...');
+      
+      final paymentResponse = await http.post(
+        Uri.parse('http://localhost:5000/api/payments'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'user': userId,
+          'subscription': widget.payment.id,
+          'amount': widget.payment.amount,
+          'currency': widget.payment.currency,
+          'transactionId': 'txn_${DateTime.now().millisecondsSinceEpoch}',
+          'status': {
+            'en': 'pending',
+            'ar': 'قيد الانتظار'
+          },
+          'paymentMethod': 'credit_card'
+        }),
+      );
+
+      print('Payment record response status: ${paymentResponse.statusCode}');
+      print('Payment record response body: ${paymentResponse.body}');
+
+      if (paymentResponse.statusCode != 200 && paymentResponse.statusCode != 201) {
+        throw Exception('Failed to create payment record: ${paymentResponse.body}');
+      }
+
+      // Then create Stripe checkout session
+      print('Creating Stripe checkout session...');
+      
+      final stripeResponse = await http.post(
+        Uri.parse('http://localhost:5000/api/stripe/createCheckoutSession'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'amount': amount,
+          'currency': currency.toLowerCase(),
+        }),
+      );
+
+      print('Stripe response status: ${stripeResponse.statusCode}');
+      print('Stripe response body: ${stripeResponse.body}');
+
+      if (stripeResponse.statusCode != 200 && stripeResponse.statusCode != 201) {
+        throw Exception('Failed to create checkout session: ${stripeResponse.body}');
+      }
+
+      final jsonResponse = json.decode(stripeResponse.body);
+      final checkoutUrl = jsonResponse['url'];
+
+      print('Checkout URL: $checkoutUrl');
+
+      // Open the Stripe checkout URL
+      if (await canLaunch(checkoutUrl)) {
+        print('Launching checkout URL...');
+        final launched = await launch(checkoutUrl);
+        print('Launch result: $launched');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Redirecting to payment page...')),
+          );
+        }
+      } else {
+        print('Could not launch URL: $checkoutUrl');
+        throw Exception('Could not launch checkout URL');
+      }
+    } catch (e, stackTrace) {
+      print('Error in _startStripePayment: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   void _handlePayment() {
     if (_selectedPaymentOption == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Payment(payment: widget.payment),
-        ),
-      );
+      _startStripePayment();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -58,49 +160,46 @@ class _CreditCardPaymentState extends State<CreditCardPayment> {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionHeader(),
-                      const SizedBox(height: 10),
-                      _buildSummaryCard(),
-                      const SizedBox(height: 16),
-                      _buildSubscriptionTitleRow(),
-                      const SizedBox(height: 10),
-                      _buildPromoToggle(),
-                      if (_showPromoCode) _buildPromoField(),
-                      const SizedBox(height: 20),
-                      _buildTotalDue(),
-                      const SizedBox(height: 10),
-                      _buildStatusAndDate(),
-                      const SizedBox(height: 20),
-                      _buildPaymentOption(
-                        index: 0,
-                        title: 'Pay with Card',
-                        leading: _paymentIcon('assets/images/download.png'),
-                      ),
-                      _buildPaymentOption(
-                        index: 1,
-                        title: 'Pay with Fawry',
-                        leading: _paymentIcon('assets/images/download.jpg'),
-                      ),
-                      if (_selectedPaymentOption == 1)
-                        _buildPhoneField('Pay using any Fawry outlet.'),
-                      _buildPaymentOption(
-                        index: 2,
-                        title: 'Pay with Vodafone Cash',
-                        leading:
-                            _paymentIcon('assets/images/vodafone-cash.png'),
-                      ),
-                      if (_selectedPaymentOption == 2)
-                        _buildPhoneField('Pay using Vodafone Cash.'),
-                      const SizedBox(height: 30),
-                      _buildContinueButton(),
-                    ],
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(),
+                    const SizedBox(height: 10),
+                    _buildSummaryCard(),
+                    const SizedBox(height: 16),
+                    _buildSubscriptionTitleRow(),
+                    const SizedBox(height: 10),
+                    _buildPromoToggle(),
+                    if (_showPromoCode) _buildPromoField(),
+                    const SizedBox(height: 20),
+                    _buildTotalDue(),
+                    const SizedBox(height: 10),
+                    _buildStatusAndDate(),
+                    const SizedBox(height: 20),
+                    _buildPaymentOption(
+                      index: 0,
+                      title: 'Pay with Card',
+                      leading: _paymentIcon('assets/images/download.png'),
+                    ),
+                    _buildPaymentOption(
+                      index: 1,
+                      title: 'Pay with Fawry',
+                      leading: _paymentIcon('assets/images/download.jpg'),
+                    ),
+                    if (_selectedPaymentOption == 1)
+                      _buildPhoneField('Pay using any Fawry outlet.'),
+                    _buildPaymentOption(
+                      index: 2,
+                      title: 'Pay with Vodafone Cash',
+                      leading: _paymentIcon('assets/images/vodafone-cash.png'),
+                    ),
+                    if (_selectedPaymentOption == 2)
+                      _buildPhoneField('Pay using Vodafone Cash.'),
+                    const SizedBox(height: 30),
+                    _buildContinueButton(),
+                  ],
                 ),
               ),
             ),
@@ -109,9 +208,6 @@ class _CreditCardPaymentState extends State<CreditCardPayment> {
       ),
     );
   }
-
-  // باقي الميثودز بدون تغيير: _buildSectionHeader, _buildSummaryCard, etc...
-  // كلها سليمة
 
   Widget _buildSectionHeader() {
     return Row(

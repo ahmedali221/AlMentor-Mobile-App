@@ -1,9 +1,12 @@
+import 'package:almentor_clone/models/payment_model.dart';
 import 'package:almentor_clone/pages/categories/categoryCourses.dart';
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
 import 'package:almentor_clone/pages/instructors/instructors.dart';
 import 'package:almentor_clone/pages/subs%20and%20payment/craditpayment.dart';
 import 'package:almentor_clone/pages/subs%20and%20payment/subscribe.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'package:almentor_clone/Core/Themes/lightTheme.dart';
@@ -21,6 +24,16 @@ import 'services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (!kIsWeb) {
+    try {
+      Stripe.publishableKey =
+          'pk_test_51RPVt0HK6cdy1T9j73EZOjay66JK1G7sS25qBdV7NAsj1axBGobnqlvvu8HLbGH3cE6bmPiPGnmSIM0Hxx7z2hp900mwB8Mphx';
+
+      await Stripe.instance.applySettings();
+    } catch (e) {
+      print('Stripe init error: $e');
+    }
+  }
   // Initialize auth service and check login status
   final authService = AuthService();
   final isLoggedIn = await authService.isLoggedIn();
@@ -72,7 +85,12 @@ class _MyAppState extends State<MyApp> {
             '/account': (context) => const AccountPage(),
             '/clips': (context) => const ClipsPage(),
             '/search': (context) => const SearchPage(),
-            '/subscribe': (context) => SubscribePage(),
+            '/subscribe': (context) => const SubscribePage(),
+            '/credit_card_payment': (context) {
+              final payment =
+                  ModalRoute.of(context)!.settings.arguments as PaymentModel;
+              return CraditPayment(payment: payment);
+            },
           },
         );
       },

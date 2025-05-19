@@ -34,15 +34,19 @@ class Loginpage extends StatelessWidget {
           final responseData = json.decode(response.body);
           final token = responseData['token'];
           final userData = responseData['user'];
+          final userId = responseData['user']?['_id'];
 
           if (token != null) {
             // Use debugPrint instead of print for logging
             debugPrint('Token: $token');
             debugPrint('User : $userData');
+            debugPrint('User ID: $userId');
 
             final prefs = await SharedPreferences.getInstance();
             prefs.setString('jwt_token', token);
             prefs.setString('user', json.encode(userData));
+            prefs.setString('user_id', userId.toString());
+
             if (mounted) {
               Navigator.pushReplacementNamed(context, '/home');
             }

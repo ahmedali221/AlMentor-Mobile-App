@@ -125,7 +125,8 @@ class Course {
       'categoryId': categoryId,
       'modules': modules.map((m) => m.toJson()).toList(),
       'freeLessons': freeLessons.map((l) => l.toJson()).toList(),
-      'instructor': instructor.toJson(), // Call toJson() on the instructor object
+      'instructor':
+          instructor.toJson(), // Call toJson() on the instructor object
     };
   }
 

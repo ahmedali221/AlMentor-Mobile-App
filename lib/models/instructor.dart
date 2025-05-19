@@ -39,8 +39,9 @@ class Instructor {
       yearsOfExperience: json['yearsOfExperience'] ?? 0,
       approvalStatus: json['approvalStatus'] ?? '',
       user: User.fromJson(json['profile'] ?? {}),
-      socialMediaLinks:
-          Map<String, String>.from(json['socialMediaLinks'] ?? {}),
+      socialMediaLinks: Map<String, String>.from(json['socialMediaLinks']?.map(
+            (key, value) => MapEntry(key, value.toString().replaceAll('`', '').trim()),
+          ) ?? {}),
     );
   }
 

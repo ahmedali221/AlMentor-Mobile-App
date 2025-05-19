@@ -1,9 +1,9 @@
 import 'package:almentor_clone/models/payment_model.dart';
-import 'package:almentor_clone/models/subscription.dart';
-import 'package:almentor_clone/pages/subs%20and%20payment/craditpayment.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:almentor_clone/models/subscription.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SubscribePage extends StatefulWidget {
   const SubscribePage({super.key});
@@ -17,11 +17,30 @@ class _SubscribePageState extends State<SubscribePage> {
   int selectedIndex = 0;
   bool isLoading = true;
   String? errorMessage;
+  bool isAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _checkLoginAndLoadData();
+  }
+
+  Future<void> _checkLoginAndLoadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+      return;
+    }
+
+    setState(() {
+      isAuthenticated = true;
+    });
+
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -45,14 +64,33 @@ class _SubscribePageState extends State<SubscribePage> {
 
   Future<void> fetchSubscriptions() async {
     try {
-      final response = await http
-          .get(Uri.parse('http://192.168.1.7:5000/api/subscriptions'));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null || token.isEmpty) {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+
+    final response = await http.get(
+      Uri.parse('http://localhost:5000/api/subscriptions'),
+      headers: token != null
+          ? {'Authorization': 'Bearer $token'}
+          : {},
+    );
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
           subscriptions =
               data.map((json) => Subscription.fromJson(json)).toList();
         });
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       } else {
         throw Exception('فشل في تحميل البيانات');
       }
@@ -63,7 +101,18 @@ class _SubscribePageState extends State<SubscribePage> {
   }
 
   Future<void> subscribeToPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+
+  if (token == null || token.isEmpty) {
+  if (mounted) {
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+  return;
+}
+
     if (subscriptions.isEmpty) return;
+
     final selected = subscriptions[selectedIndex];
 
     try {
@@ -81,13 +130,11 @@ class _SubscribePageState extends State<SubscribePage> {
       );
 
       if (!mounted) return;
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => CreditCardPayment(payment: payment)));
-      // Navigator.pushNamed(
-      //   context,
-      //   '/credit_card_payment',
-      //   arguments: payment,
-      // );
+      Navigator.pushNamed(
+        context,
+        '/credit_card_payment',
+        arguments: payment,
+      );
     } catch (e) {
       setState(() {
         errorMessage = 'حدث خطأ أثناء الاشتراك';
@@ -102,6 +149,13 @@ class _SubscribePageState extends State<SubscribePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!isAuthenticated) {
+      // لا تعرض أي شيء لو مش متحقق من تسجيل الدخول
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black87,
       appBar: AppBar(
@@ -151,8 +205,8 @@ class _SubscribePageState extends State<SubscribePage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red[700],
             minimumSize: const Size.fromHeight(50),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
           child: isLoading
               ? const SizedBox(

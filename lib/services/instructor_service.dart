@@ -34,13 +34,14 @@ class InstructorService {
       );
 
       if (response.statusCode == 200) {
-        return Instructor.fromJson(json.decode(response.body));
+        final responseData = json.decode(response.body);
+        // Extract the instructor data from the 'data' field
+        return Instructor.fromJson(responseData['data']);
       } else {
         throw Exception('Failed to load instructor: ${response.statusCode}');
       }
     } catch (e) {
-      // Return a demo instructor for now
-      throw Exception('Failed to load course: $e');
+      throw Exception('Failed to load instructor: $e');
     }
   }
 }
