@@ -24,28 +24,34 @@ class _InstructorsState extends State<Instructors> {
   @override
   void initState() {
     super.initState();
-    fetchInstructors();
+    _loadInstructors();
   }
 
-  Future<void> fetchInstructors() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://192.168.1.7:5000/api/instructors'),
-      );
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> data = responseData['data'] ?? [];
-        setState(() {
-          instructors = data.map((json) => Instructor.fromJson(json)).toList();
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
-        _showError('Failed to load instructors');
+  Future<List<Map<String, dynamic>>> fetchInstructors() async {
+    final response =
+        await http.get(Uri.parse('http://localhost:5000/api/instructors'));
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body);
+      // The API returns: { "success": true, "message": "...", "data": [ ... ] }
+      if (decoded is Map && decoded['data'] is List) {
+        return List<Map<String, dynamic>>.from(decoded['data']);
       }
+    }
+    throw Exception('Failed to load instructors');
+  }
+
+  Future<void> _loadInstructors() async {
+    try {
+      final data = await fetchInstructors();
+      setState(() {
+        instructors = data.map((json) => Instructor.fromJson(json)).toList();
+        isLoading = false;
+      });
     } catch (e) {
-      setState(() => isLoading = false);
-      _showError('Error connecting to server');
+      setState(() {
+        isLoading = false;
+      });
+      _showError('Failed to load instructors');
     }
   }
 

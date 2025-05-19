@@ -55,14 +55,14 @@ class _ClipsPageState extends State<ClipsPage> {
           : Stack(
               children: [
                 // Background image or fallback
-                Positioned.fill(
-                  child: randomLesson!.videoUrl != null
-                      ? Image.asset(
-                          'assets/images/teacher2.png', // Can be thumbnail later
-                          fit: BoxFit.cover,
-                        )
-                      : Container(color: Colors.grey[900]),
-                ),
+                // Positioned.fill(
+                //   child: randomLesson!.videoUrl != null
+                //       ? Image.asset(
+                //           'assets/images/teacher2.png', // Can be thumbnail later
+                //           fit: BoxFit.cover,
+                //         )
+                //       : Container(color: Colors.grey[900]),
+                // ),
 
                 // Theme toggle
                 Positioned(
@@ -97,7 +97,7 @@ class _ClipsPageState extends State<ClipsPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          randomLesson!.getLocalizedTitle("ar"),
+                          "ar",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

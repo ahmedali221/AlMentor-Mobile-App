@@ -17,14 +17,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 4; // Home is selected by default (last index is 4)
+  int _selectedIndex = 4;
 
   final List<Widget> _pages = const [
     AccountPage(),
     ClipsPage(),
     SearchPage(),
-    Instructors(), // Instructors page
-    MainPage(), // Home page
+    Instructors(),
+    MainPage(),
   ];
 
   void _onNavBarTap(int index) {
@@ -36,22 +36,25 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          isDark ? Colors.grey[900] : Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: isDark
+            ? Colors.grey[900]
+            : Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
           'Almentor',
-          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+          style: TextStyle(
+            color: isDark
+                ? Colors.white
+                : Theme.of(context).textTheme.bodyLarge?.color,
+          ),
         ),
         actions: [
-          IconButton(
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-              icon: Icon(Icons.list)),
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -64,6 +67,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       drawer: Drawer(
+        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -100,7 +104,12 @@ class _HomePageState extends State<HomePage> {
               ),
               title: Row(
                 children: [
-                  Text('Try Your Mentor'),
+                  Text(
+                    'Try Your Mentor',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
                   SizedBox(width: 8),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -129,29 +138,36 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            Divider(),
+            Divider(color: isDark ? Colors.grey[700] : Colors.grey[300]),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Subscription'),
+              leading: Icon(Icons.settings,
+                  color: isDark ? Colors.white : Colors.black),
+              title: Text('Subscription',
+                  style:
+                      TextStyle(color: isDark ? Colors.white : Colors.black)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/subscribe');
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Settings'),
+              leading: Icon(Icons.settings,
+                  color: isDark ? Colors.white : Colors.black),
+              title: Text('Settings',
+                  style:
+                      TextStyle(color: isDark ? Colors.white : Colors.black)),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to settings
               },
             ),
             ListTile(
-              leading: Icon(Icons.help_outline),
-              title: Text('Help & Support'),
+              leading: Icon(Icons.help_outline,
+                  color: isDark ? Colors.white : Colors.black),
+              title: Text('Help & Support',
+                  style:
+                      TextStyle(color: isDark ? Colors.white : Colors.black)),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to help
               },
             ),
           ],
@@ -163,8 +179,10 @@ class _HomePageState extends State<HomePage> {
         onTap: _onNavBarTap,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey,
+        backgroundColor: isDark
+            ? Colors.grey[900]
+            : Theme.of(context).scaffoldBackgroundColor,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -180,7 +198,7 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.school),
-            label: 'Instructors', // New Instructors link
+            label: 'Instructors',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

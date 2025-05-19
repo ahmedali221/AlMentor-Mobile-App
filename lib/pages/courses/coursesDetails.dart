@@ -1,7 +1,10 @@
+import 'package:almentor_clone/models/module.dart';
+import 'package:almentor_clone/pages/courses/lessonsViewr.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../models/course.dart';
+import '../../models/lesson.dart';
 import '../../services/course_service.dart';
 import '../../services/module_service.dart';
 import '../../services/lesson_service.dart';
@@ -9,7 +12,6 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:provider/provider.dart';
 import '../../Core/Providers/themeProvider.dart';
-import '../../Core/Custom Widgets/horizontal_animated_courses.dart';
 
 class CourseDetails extends StatefulWidget {
   final String courseId;
@@ -28,8 +30,8 @@ class _CourseDetailsState extends State<CourseDetails>
 
   late TabController _tabController;
   Course? course;
-  List<dynamic> modules = [];
-  List<dynamic> lessons = [];
+  List<Module> modules = [];
+  List<Lesson> lessons = [];
   bool isLoading = true;
   String errorMessage = '';
   int selectedModuleIndex = 0;
@@ -41,12 +43,30 @@ class _CourseDetailsState extends State<CourseDetails>
   bool isVideoInitialized = false;
   String? currentVideoUrl;
 
+  void _onLessonTap(int index) {
+    final lesson = lessons[index];
+    final hasVideo = lesson.content.videoUrl.isNotEmpty;
+
+    if (hasVideo) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LessonViewerPage(
+            course: course!,
+            modules: modules,
+            lessons: lessons,
+            initialIndex: index,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
-    print('CourseDetails initialized with courseId: ${widget.courseId}');
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    fetchCourseDetails();
+    _loadCourseData();
   }
 
   @override
@@ -57,84 +77,61 @@ class _CourseDetailsState extends State<CourseDetails>
     super.dispose();
   }
 
-  Future<void> fetchCourseDetails() async {
+  Future<void> _loadCourseData() async {
     try {
       setState(() {
         isLoading = true;
         errorMessage = '';
       });
 
-      print('Fetching course details for ID: ${widget.courseId}');
-      // Fetch course details
-
-      // Convert response to Course object
+      // 1. Load course details
       final courseData = await _courseService.getCourseById(widget.courseId);
-      print('Raw course data: ${jsonEncode(courseData)}'); // ✅ This now works
 
-      print('Raw course data: ${jsonEncode(courseData)}');
+      // 2. Load all lessons for the course at once
+      final lessonsData =
+          await _lessonService.getLessonsByCourse(widget.courseId);
 
-      // Fetch modules for this course
-      final moduleData =
+      // 3. Load modules
+      final modulesData =
           await _moduleService.getModulesByCourse(widget.courseId);
-      print('Fetched ${moduleData.length} modules for course');
-
-      // Sort modules by order
-      moduleData.sort((a, b) => a['order'].compareTo(b['order']));
+      modulesData.sort((a, b) => a['order'].compareTo(b['order']));
 
       setState(() {
         course = courseData;
-        modules = moduleData;
+        modules = modulesData.map((m) => Module.fromJson(m)).toList();
+        lessons = lessonsData.map((l) => Lesson.fromJson(l)).toList();
         isLoading = false;
       });
 
-      // If there are modules, fetch lessons for the first module
+      // If there are modules, show lessons for the first module
       if (modules.isNotEmpty) {
-        print('Fetching lessons for first module: ${modules[0]['_id']}');
-        fetchLessonsForModule(modules[0]['_id'], 0);
-      } else {
-        print('No modules found for this course');
+        _filterLessonsForModule(modules[0].id);
       }
     } catch (e) {
       setState(() {
         isLoading = false;
-        errorMessage = 'Error fetching course details: $e';
-      });
-      print('Error in fetchCourseDetails: $e');
-    }
-  }
-
-  Future<void> fetchLessonsForModule(String moduleId, int moduleIndex) async {
-    try {
-      setState(() {
-        lessons = [];
-        selectedModuleIndex = moduleIndex;
-        selectedLessonIndex = null;
-      });
-
-      print('Fetching lessons for module: $moduleId');
-      final lessonData = await _lessonService.getLessonsByModule(moduleId);
-      print('Fetched ${lessonData.length} lessons for module');
-
-      // Sort lessons by order
-      lessonData.sort((a, b) => a['order'].compareTo(b['order']));
-
-      setState(() {
-        lessons = lessonData;
-      });
-    } catch (e) {
-      print('Error fetching lessons: $e');
-      setState(() {
-        lessons = [];
+        errorMessage = 'Error loading course: $e';
       });
     }
   }
 
-  void initializeVideo(String videoUrl) {
-    if (currentVideoUrl == videoUrl && isVideoInitialized) {
-      return; // Video already initialized
-    }
+  void _filterLessonsForModule(String moduleId) {
+    setState(() {
+      selectedLessonIndex = null;
+    });
+    // Lessons are already loaded, we just filter them
+    final filteredLessons =
+        lessons.where((l) => l.moduleId == moduleId).toList();
+    filteredLessons.sort((a, b) => a.order.compareTo(b.order));
 
-    print('Initializing video player with URL: $videoUrl');
+    setState(() {
+      lessons = filteredLessons;
+    });
+  }
+
+  void _initializeVideo(String videoUrl) {
+    if (currentVideoUrl == videoUrl && isVideoInitialized) return;
+
     // Dispose previous controllers
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
@@ -165,20 +162,20 @@ class _CourseDetailsState extends State<CourseDetails>
       setState(() {
         isVideoInitialized = true;
       });
-      print('Video player initialized successfully');
     }).catchError((error) {
-      print('Error initializing video player: $error');
+      print('Error initializing video: $error');
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final locale = Localizations.localeOf(context);
-    final lang = locale.languageCode;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          isDark ? Colors.grey[900] : Theme.of(context).scaffoldBackgroundColor,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
@@ -189,53 +186,25 @@ class _CourseDetailsState extends State<CourseDetails>
                       slivers: [
                         SliverAppBar(
                           pinned: true,
-                          floating: false,
                           expandedHeight: 220,
-                          backgroundColor:
-                              Theme.of(context).appBarTheme.backgroundColor,
+                          backgroundColor: isDark
+                              ? Colors.grey[900]
+                              : Theme.of(context).appBarTheme.backgroundColor,
                           flexibleSpace: FlexibleSpaceBar(
                             title: Text(
                               course!.getLocalizedTitle(locale),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                            .appBarTheme
-                                            .titleTextStyle
-                                            ?.color ??
-                                        Theme.of(context).primaryColor,
-                                  ),
-                            ),
-                            background: isVideoInitialized &&
-                                    _chewieController != null
-                                ? Chewie(controller: _chewieController!)
-                                : Image.network(
-                                    course!.thumbnail,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: Icon(Icons.error),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          ),
-                          actions: [
-                            IconButton(
-                              icon: Icon(
-                                themeProvider.isDarkMode
-                                    ? Icons.light_mode
-                                    : Icons.dark_mode,
-                                color: Theme.of(context).primaryColor,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black,
                               ),
-                              onPressed: () {
-                                themeProvider.toggleTheme();
-                              },
                             ),
-                          ],
+                            background:
+                                isVideoInitialized && _chewieController != null
+                                    ? Chewie(controller: _chewieController!)
+                                    : Image.network(
+                                        course!.thumbnail,
+                                        fit: BoxFit.cover,
+                                      ),
+                          ),
                         ),
                         SliverToBoxAdapter(
                           child: Padding(
@@ -243,43 +212,24 @@ class _CourseDetailsState extends State<CourseDetails>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.access_time,
-                                        size: 16, color: Colors.grey[600]),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${(course!.duration / 60).round()} minutes',
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Icon(Icons.star,
-                                        size: 16, color: Colors.amber),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${course!.rating.average.toStringAsFixed(1)} (${course!.rating.count})',
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
+                                _buildCourseMetadata(isDark),
+                                const SizedBox(height: 16),
+                                TabBar(
+                                  controller: _tabController,
+                                  labelColor: isDark
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.primary,
+                                  unselectedLabelColor: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[700],
+                                  indicatorColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  tabs: const [
+                                    Tab(text: 'Content'),
+                                    Tab(text: 'About'),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
                               ],
-                            ),
-                          ),
-                        ),
-                        SliverPersistentHeader(
-                          pinned: true,
-                          delegate: _SliverTabBarDelegate(
-                            TabBar(
-                              controller: _tabController,
-                              tabs: const [
-                                Tab(text: 'Content'),
-                                Tab(text: 'About'),
-                              ],
-                              labelColor: Theme.of(context).primaryColor,
-                              unselectedLabelColor:
-                                  Theme.of(context).textTheme.bodyMedium?.color,
-                              indicatorColor: Theme.of(context).primaryColor,
                             ),
                           ),
                         ),
@@ -287,8 +237,8 @@ class _CourseDetailsState extends State<CourseDetails>
                           child: TabBarView(
                             controller: _tabController,
                             children: [
-                              _buildContentTab(locale),
-                              _buildAboutTab(locale),
+                              _buildContentTab(locale, isDark),
+                              _buildAboutTab(locale, isDark),
                             ],
                           ),
                         ),
@@ -297,210 +247,146 @@ class _CourseDetailsState extends State<CourseDetails>
     );
   }
 
-  Widget _buildContentTab(Locale locale) {
-    final lang = locale.languageCode;
-
-    if (modules.isEmpty) {
-      return Center(child: Text('No modules available for this course'));
-    }
-
+  Widget _buildCourseMetadata(bool isDark) {
     return Row(
       children: [
-        // Left side - Module list (30% width)
-        Container(
-          width: MediaQuery.of(context).size.width * 0.3,
-          color: Theme.of(context).colorScheme.surface,
-          child: ListView.builder(
-            itemCount: modules.length,
-            itemBuilder: (context, index) {
-              final module = modules[index];
-              final isSelected = index == selectedModuleIndex;
-
-              return Container(
-                color: isSelected
-                    ? Theme.of(context).primaryColor.withOpacity(0.1)
-                    : null,
-                child: ListTile(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  title: Text(
-                    module['title'][lang] ??
-                        module['title']['en'] ??
-                        'Module ${index + 1}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Theme.of(context).primaryColor : null,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () {
-                    fetchLessonsForModule(module['_id'], index);
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-
-        // Right side - Lesson list (70% width)
-        Expanded(
-          child: lessons.isEmpty
-              ? Center(child: Text('No lessons available for this module'))
-              : ListView.builder(
-                  itemCount: lessons.length,
-                  itemBuilder: (context, index) {
-                    final lesson = lessons[index];
-                    final bool hasVideo = lesson['content'] != null &&
-                        lesson['content']['videoUrl'] != null &&
-                        lesson['content']['videoUrl'].toString().isNotEmpty;
-                    final bool isSelected = index == selectedLessonIndex;
-
-                    return Card(
-                      margin:
-                          EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                      elevation: isSelected ? 3 : 1,
-                      color: isSelected
-                          ? Theme.of(context).primaryColor.withOpacity(0.1)
-                          : null,
-                      child: ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Icon(
-                            hasVideo
-                                ? Icons.play_circle_outline
-                                : Icons.article,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        title: Text(
-                          lesson['title'][lang] ??
-                              lesson['title']['en'] ??
-                              'Lesson ${index + 1}',
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${lesson['duration'] ?? 0} minutes',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            selectedLessonIndex = index;
-                          });
-                          if (hasVideo) {
-                            initializeVideo(lesson['content']['videoUrl']);
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
+        Icon(Icons.access_time,
+            size: 16, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text('${course!.duration} hours',
+            style:
+                TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600])),
+        const SizedBox(width: 16),
+        Icon(Icons.star, size: 16, color: Colors.amber),
+        const SizedBox(width: 4),
+        Text(
+          '${course!.rating.average.toStringAsFixed(1)} (${course!.rating.count})',
+          style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
         ),
       ],
     );
   }
 
-  Widget _buildAboutTab(Locale locale) {
-    final lang = locale.languageCode;
+  Widget _buildContentTab(Locale locale, bool isDark) {
+    return ListView.builder(
+      itemCount: modules.length,
+      itemBuilder: (context, moduleIndex) {
+        final module = modules[moduleIndex];
+        final moduleLessons = lessons
+            .where((l) => l.moduleId == module.id)
+            .toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
 
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: ExpansionTile(
+            initiallyExpanded: moduleIndex == selectedModuleIndex,
+            backgroundColor: isDark ? Colors.grey[850] : Colors.grey[100],
+            collapsedBackgroundColor: isDark ? Colors.grey[900] : Colors.white,
+            title: Text(
+              module.getLocalizedTitle(locale.languageCode),
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onExpansionChanged: (expanded) {
+              if (expanded) {
+                setState(() {
+                  selectedModuleIndex = moduleIndex;
+                });
+              }
+            },
+            children: moduleLessons.isEmpty
+                ? [
+                    ListTile(
+                      title: Text(
+                        'No lessons available for this module',
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[700],
+                        ),
+                      ),
+                    )
+                  ]
+                : moduleLessons.map((lesson) {
+                    final hasVideo = lesson.content.videoUrl.isNotEmpty;
+                    final lessonGlobalIndex = lessons.indexWhere((l) =>
+                        l.id == lesson.id && l.moduleId == lesson.moduleId);
+
+                    return ListTile(
+                      leading: Icon(
+                        hasVideo ? Icons.play_circle : Icons.article,
+                        color: hasVideo
+                            ? Theme.of(context).colorScheme.primary
+                            : (isDark ? Colors.white : Colors.black54),
+                      ),
+                      title: Text(
+                        lesson.getLocalizedTitle(locale),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                      subtitle: Text('${lesson.duration} min'),
+                      onTap: () => _onLessonTap(lessonGlobalIndex),
+                    );
+                  }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAboutTab(Locale locale, bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'About this course',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Description', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(
-            course!.description[lang] ?? course!.description['en'] ?? '',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(course!.getLocalizedDescription(locale)),
           const SizedBox(height: 16),
-          Text(
-            'Level: ${course!.level[lang] ?? course!.level['en'] ?? ''}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text('Level: ${course!.getLocalizedLevel(locale)}'),
           const SizedBox(height: 8),
-          Text(
-            'Language: ${course!.language[lang] ?? course!.language['en'] ?? ''}',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Text('Language: ${course!.getLocalizedLanguage(locale)}'),
+          const SizedBox(height: 24),
+          Divider(),
+          Text('Instructor', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundImage:
+                    NetworkImage(course!.instructor.user.profilePicture),
+                radius: 30,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      course!.instructor.user.firstNameEn,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      course!.instructor.biographyEn ?? 'No bio available',
+                      style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          if (course!.freeLessons.isNotEmpty) ...[
-            Text(
-              'Free Lessons',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            ...course!.freeLessons
-                .map((lesson) => Card(
-                      margin: EdgeInsets.only(bottom: 8.0),
-                      child: ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Icon(
-                            Icons.play_circle_outline,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        title: Text(
-                            lesson.title[lang] ?? lesson.title['en'] ?? ''),
-                        subtitle: Text('${lesson.duration} minutes'),
-                        onTap: () {
-                          // Handle free lesson tap
-                          print('Free lesson tapped');
-                        },
-                      ),
-                    ))
-                .toList(),
-          ]
         ],
       ),
     );
-  }
-}
-
-// Helper for sticky tab bar in slivers
-class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar _tabBar;
-  _SliverTabBarDelegate(this._tabBar);
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: _tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
-    return false;
   }
 }

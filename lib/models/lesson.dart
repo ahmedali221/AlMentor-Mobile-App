@@ -1,57 +1,65 @@
+import 'package:almentor_clone/models/course.dart';
+import 'package:almentor_clone/models/module.dart';
+import 'package:flutter/material.dart';
+
 class Lesson {
   final String id;
   final Map<String, String> title;
-  final String moduleId;
-  final String? courseId;
   final Map<String, String> description;
+  final LessonContent content;
+  final String moduleId;
+  final Course course;
+  final Module module;
   final int order;
   final int duration;
   final bool isFree;
   final bool isPublished;
-  final String? videoUrl;
-  final Map<String, String>? articleText;
-  final List<Attachment> attachments;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Lesson({
     required this.id,
     required this.title,
-    required this.moduleId,
-    this.courseId,
     required this.description,
+    required this.content,
+    required this.moduleId,
+    required this.course,
+    required this.module,
     required this.order,
     required this.duration,
     required this.isFree,
     required this.isPublished,
-    this.videoUrl,
-    this.articleText,
-    required this.attachments,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
     return Lesson(
-      id: json['_id'],
+      id: json['_id'] ?? '',
       title: {
         'en': json['title']['en'] ?? '',
         'ar': json['title']['ar'] ?? '',
       },
-      moduleId: json['module'],
-      courseId: json['course'],
       description: {
-        'en': json['description']?['en'] ?? '',
-        'ar': json['description']?['ar'] ?? '',
+        'en': json['description']['en'] ?? '',
+        'ar': json['description']['ar'] ?? '',
       },
-      order: json['order'],
+      content: LessonContent.fromJson(json['content'] ?? {}),
+      moduleId: json['module'] is Map
+          ? json['module']['_id'] ?? ''
+          : json['module'] ?? '',
+      course: Course.fromJson(json['course'] ?? {}),
+      module: Module.fromJson(json['module'] is Map ? json['module'] : {}),
+      order: json['order'] ?? 0,
       duration: json['duration'] ?? 0,
       isFree: json['isFree'] ?? false,
       isPublished: json['isPublished'] ?? false,
-      videoUrl: json['content']?['videoUrl'],
-      articleText: json['content']?['articleText'] != null
-          ? Map<String, String>.from(json['content']['articleText'])
-          : null,
-      attachments: json['content']?['attachments'] != null
-          ? List<Attachment>.from(
-              json['content']['attachments'].map((x) => Attachment.fromJson(x)))
-          : [],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : DateTime.now(),
     );
   }
 
@@ -59,66 +67,58 @@ class Lesson {
     return {
       '_id': id,
       'title': title,
-      'module': moduleId,
-      'course': courseId,
       'description': description,
+      'content': content.toJson(),
+      'module': moduleId,
+      'course': course.toJson(),
       'order': order,
       'duration': duration,
       'isFree': isFree,
       'isPublished': isPublished,
-      'content': {
-        'videoUrl': videoUrl,
-        'articleText': articleText,
-        'attachments': attachments.map((a) => a.toJson()).toList(),
-      },
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
-  // Localization Helpers
-  String getLocalizedTitle(String lang) {
-    return title[lang] ?? title['en'] ?? '';
-  }
+  String getLocalizedTitle(Locale locale) =>
+      title[locale.languageCode] ?? title['en'] ?? '';
 
-  String getLocalizedDescription(String lang) {
-    return description[lang] ?? description['en'] ?? '';
-  }
-
-  String? getLocalizedArticleText(String lang) {
-    return articleText?[lang] ?? articleText?['en'];
-  }
+  String getLocalizedDescription(Locale locale) =>
+      description[locale.languageCode] ?? description['en'] ?? '';
 }
 
-class Attachment {
-  final Map<String, String> name;
-  final String url;
-  final String type;
+class LessonContent {
+  final Map<String, String> articleText;
+  final String videoUrl;
+  final List<dynamic> attachments;
 
-  Attachment({
-    required this.name,
-    required this.url,
-    required this.type,
+  LessonContent({
+    required this.articleText,
+    required this.videoUrl,
+    required this.attachments,
   });
 
-  factory Attachment.fromJson(Map<String, dynamic> json) {
-    return Attachment(
-      name: {
-        'en': json['name']['en'] ?? '',
-        'ar': json['name']['ar'] ?? '',
+  factory LessonContent.fromJson(Map<String, dynamic> json) {
+    return LessonContent(
+      articleText: {
+        'en': json['articleText']?['en'] ?? '',
+        'ar': json['articleText']?['ar'] ?? '',
       },
-      url: json['url'] ?? '',
-      type: json['type'] ?? 'pdf',
+      videoUrl: json['videoUrl'] ?? '',
+      attachments: json['attachments'] != null
+          ? List<dynamic>.from(json['attachments'])
+          : [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'url': url,
-      'type': type,
+      'articleText': articleText,
+      'videoUrl': videoUrl,
+      'attachments': attachments,
     };
   }
 
-  String getLocalizedName(String lang) {
-    return name[lang] ?? name['en'] ?? '';
-  }
+  String getLocalizedArticleText(Locale locale) =>
+      articleText[locale.languageCode] ?? articleText['en'] ?? '';
 }

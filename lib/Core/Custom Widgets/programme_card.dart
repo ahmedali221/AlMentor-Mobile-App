@@ -16,6 +16,7 @@ class ProgrammeCard extends StatelessWidget {
     required this.buttonText,
     this.coursesCount = 0,
     this.isRTL = true,
+    required bool isDark,
   });
 
   @override

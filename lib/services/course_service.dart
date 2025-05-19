@@ -4,22 +4,21 @@ import '../models/course.dart';
 import '../Core/Constants/apiConstants.dart';
 
 class CourseService {
-  // Get all courses
   Future<List<Course>> getCourses() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/courses'),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> coursesJson = json.decode(response.body);
-        return coursesJson.map((json) => Course.fromJson(json)).toList();
+    final response =
+        await http.get(Uri.parse('${ApiConstants.baseUrl}/api/courses'));
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body);
+      // If the response is a Map, convert it to a List
+      if (decoded is Map) {
+        return decoded.values.map((e) => Course.fromJson(e)).toList();
+      } else if (decoded is List) {
+        return decoded.map((e) => Course.fromJson(e)).toList();
       } else {
-        throw Exception('Failed to load courses: ${response.statusCode}');
+        throw Exception('Unexpected response format');
       }
-    } catch (e) {
-      print("Error fetching courses: $e");
-      throw Exception('Failed to load courses: $e');
+    } else {
+      throw Exception('Failed to load courses');
     }
   }
 

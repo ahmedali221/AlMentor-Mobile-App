@@ -1,4 +1,3 @@
-import 'package:almentor_clone/pages/Lessons/lessonsPage.dart';
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -102,7 +101,7 @@ class _CategoryCoursesState extends State<CategoryCourses> {
                           onTap: () {
                             Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) =>
-                                  LessonsPage(courseId: course['_id']),
+                                  CourseDetails(courseId: course['_id']),
                             ));
                           },
                         );
