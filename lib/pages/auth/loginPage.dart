@@ -1,86 +1,94 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../services/auth_service.dart';
 import '../../Core/Custom Widgets/customButton.dart';
 import '../../Core/Custom Widgets/customTextField.dart';
 import '../../Core/Providers/themeProvider.dart';
 import '../../Core/Localization/app_translations.dart';
 import '../../Core/Providers/language_provider.dart';
 
-class LoginPage extends StatelessWidget {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+class LoginPage extends StatefulWidget {
+  final bool showAlert;
+  final String? alertMessage;
+
+  const LoginPage({
+    super.key,
+    this.showAlert = false,
+    this.alertMessage,
+  });
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  LoginPage({super.key});
-  Future<void> loginUser(BuildContext context) async {
-    bool mounted = true;
-    if (_formKey.currentState!.validate()) {
-      try {
-        final response = await http.post(
-          Uri.parse('http://localhost:5000/api/auth/login'),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: json.encode({
-            'email': emailController.text,
-            'password': passwordController.text,
-          }),
-        );
+  @override
+  void initState() {
+    super.initState();
+    if (widget.showAlert && widget.alertMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAlertDialog(context, widget.alertMessage!);
+      });
+    }
+  }
 
-        if (response.statusCode == 200) {
-          // Extract JWT token from response
-          final responseData = json.decode(response.body);
-          final token = responseData['token'];
-          final userData = responseData['user'];
-          final userId = responseData['user']?['_id'];
+  void _showAlertDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppTranslations.getText(
+            'authentication_required',
+            Provider.of<LanguageProvider>(context, listen: false)
+                .currentLocale
+                .languageCode)),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppTranslations.getText(
+                'ok',
+                Provider.of<LanguageProvider>(context, listen: false)
+                    .currentLocale
+                    .languageCode)),
+          ),
+        ],
+      ),
+    );
+  }
 
-          if (token != null) {
-            // Use debugPrint instead of print for logging
-            debugPrint('Token: $token');
-            debugPrint('User : $userData');
-            debugPrint('User ID: $userId');
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-            final prefs = await SharedPreferences.getInstance();
-            prefs.setString('jwt_token', token);
-            prefs.setString('user', json.encode(userData));
-            prefs.setString('user_id', userId.toString());
+    setState(() => _isLoading = true);
 
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/home');
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Login failed: Token not found')),
-              );
-            }
-          }
-        } else {
-          // Handle login error
-          String errorMsg = 'Login failed: ';
-          try {
-            final errorData = json.decode(response.body);
-            errorMsg += errorData['message'] ?? response.body;
-          } catch (_) {
-            errorMsg += response.body;
-          }
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(errorMsg)),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An error occurred: $e')),
-          );
-        }
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final result = await authService.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      // Check if there's a target route to redirect to after login
+      final targetRoute = await authService.getTargetRoute();
+      await authService.clearTargetRoute();
+
+      if (targetRoute != null) {
+        Navigator.of(context).pushReplacementNamed(targetRoute);
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'])),
+      );
     }
   }
 
@@ -215,13 +223,24 @@ class LoginPage extends StatelessWidget {
                                     AppTranslations.getText('email', locale),
                                 hintText: AppTranslations.getText(
                                     'email_hint', locale),
-                                controller: emailController,
+                                controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 textDirection: isRtl
                                     ? TextDirection.rtl
                                     : TextDirection.ltr,
                                 prefixIcon: Icon(Icons.email,
                                     color: Theme.of(context).primaryColor),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return AppTranslations.getText(
+                                        'email_required', locale);
+                                  }
+                                  if (!value.contains('@')) {
+                                    return AppTranslations.getText(
+                                        'email_invalid', locale);
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 16),
                               CustomTextField(
@@ -229,23 +248,39 @@ class LoginPage extends StatelessWidget {
                                     AppTranslations.getText('password', locale),
                                 hintText: AppTranslations.getText(
                                     'password_hint', locale),
-                                controller: passwordController,
+                                controller: _passwordController,
                                 obscureText: true,
                                 textDirection: isRtl
                                     ? TextDirection.rtl
                                     : TextDirection.ltr,
                                 prefixIcon: Icon(Icons.lock,
                                     color: Theme.of(context).primaryColor),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return AppTranslations.getText(
+                                        'password_required', locale);
+                                  }
+                                  if (value.length < 6) {
+                                    return AppTranslations.getText(
+                                        'password_length', locale);
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 24),
-                              CustomButton(
-                                text: AppTranslations.getText('login', locale),
-                                onPressed: () => loginUser(context),
-                                backgroundColor: Theme.of(context).primaryColor,
-                                textColor: Colors.white,
-                                width: double.infinity,
-                                height: 50,
-                              ),
+                              _isLoading
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : CustomButton(
+                                      text: AppTranslations.getText(
+                                          'login', locale),
+                                      onPressed: _handleLogin,
+                                      backgroundColor:
+                                          Theme.of(context).primaryColor,
+                                      textColor: Colors.white,
+                                      width: double.infinity,
+                                      height: 50,
+                                    ),
                             ],
                           ),
                         ),
@@ -288,5 +323,12 @@ class LoginPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

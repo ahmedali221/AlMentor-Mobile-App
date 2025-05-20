@@ -31,45 +31,26 @@ void main() async {
     try {
       Stripe.publishableKey =
           'pk_test_51RPVt0HK6cdy1T9j73EZOjay66JK1G7sS25qBdV7NAsj1axBGobnqlvvu8HLbGH3cE6bmPiPGnmSIM0Hxx7z2hp900mwB8Mphx';
-
       await Stripe.instance.applySettings();
     } catch (e) {
-      print('Stripe init error: $e');
+      print('Stripe init error: $e');
     }
   }
-  // Initialize auth service and check login status
-  final authService = AuthService();
-  final isLoggedIn = await authService.isLoggedIn();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        Provider(create: (_) => AuthService()),
       ],
-      child: MyApp(isLoggedIn: isLoggedIn),
+      child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatefulWidget {
-  final bool isLoggedIn;
-
-  const MyApp({super.key, this.isLoggedIn = false});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late String initialRoute;
-
-  @override
-  void initState() {
-    super.initState();
-    // Set initial route based on authentication status
-    initialRoute = widget.isLoggedIn ? '/home' : '/login';
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +63,7 @@ class _MyAppState extends State<MyApp> {
           darkTheme: darkTheme,
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: initialRoute,
+          initialRoute: '/home', // Always start with home page
           onGenerateRoute: RouteGenerator.generateRoute,
           navigatorObservers: [RouteObserver()],
           routes: {
@@ -101,7 +82,6 @@ class _MyAppState extends State<MyApp> {
             Locale('ar'),
           ],
           localizationsDelegates: const [
-            // Add required delegates here
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
@@ -113,8 +93,6 @@ class _MyAppState extends State<MyApp> {
 }
 
 class RouteObserver extends NavigatorObserver {
-  final AuthService _authService = AuthService();
-
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
@@ -127,16 +105,23 @@ class RouteObserver extends NavigatorObserver {
     if (newRoute != null) _checkProtectedRoute(newRoute);
   }
 
-  void _checkProtectedRoute(Route<dynamic> route) {
-    // Add protected route names here
-    final protectedRoutes = ['/lessons_viewer'];
+  void _checkProtectedRoute(Route<dynamic> route) async {
+    final authService =
+        Provider.of<AuthService>(route.navigator!.context, listen: false);
+    final protectedRoutes = [
+      '/user_courses',
+      '/lessons_viewer',
+      '/account',
+      '/subscribe'
+    ];
 
     if (protectedRoutes.contains(route.settings.name)) {
-      _authService.isLoggedIn().then((isLoggedIn) {
-        if (!isLoggedIn) {
-          Navigator.of(route.navigator!.context).pushReplacementNamed('/login');
-        }
-      });
+      final isLoggedIn = await authService.isLoggedIn();
+      if (!isLoggedIn) {
+        // Save the target route for redirection after login
+        await authService.saveTargetRoute(route.settings.name!);
+        Navigator.of(route.navigator!.context).pushReplacementNamed('/login');
+      }
     }
   }
 }

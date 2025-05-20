@@ -7,6 +7,7 @@ import '../Core/Constants/apiConstants.dart';
 class AuthService {
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user';
+  static const String _targetRouteKey = 'target_route';
 
   // Login user
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -27,7 +28,7 @@ class AuthService {
         final token = responseData['token'];
         final userId = responseData['user']['_id'];
 
-        await _saveAuthData(token, userId); // Save token and user ID
+        await _saveAuthData(token, userId);
 
         // Fetch full user data immediately after login
         final fullUser = await fetchUserData(userId, token);
@@ -39,7 +40,6 @@ class AuthService {
             'message': responseData['message'] ?? 'Login successful',
           };
         } else {
-          // Handle case where fetching full user data fails
           return {
             'success': false,
             'message': 'Login successful, but failed to fetch user details.',
@@ -76,12 +76,9 @@ class AuthService {
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 201) {
-        // Save token and user data
         final token = responseData['token'];
         final userData = responseData['user'];
-
         await _saveAuthData(token, userData);
-
         return {
           'success': true,
           'user': User.fromJson(userData),
@@ -104,21 +101,7 @@ class AuthService {
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
     final token = await getToken();
-    if (token == null) return false;
-
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/check'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
+    return token != null;
   }
 
   // Get current user
@@ -127,11 +110,9 @@ class AuthService {
     final savedUserData = prefs.getString(_userKey);
 
     if (savedUserData != null) {
-      // Return saved full user data if available
       return User.fromJson(json.decode(savedUserData));
     }
 
-    // If full user data not saved, try fetching using saved token and user ID
     final token = prefs.getString(_tokenKey);
     final userId = prefs.getString('user_id');
 
@@ -148,6 +129,24 @@ class AuthService {
     return prefs.getString(_tokenKey);
   }
 
+  // Save target route for redirect after login
+  Future<void> saveTargetRoute(String route) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_targetRouteKey, route);
+  }
+
+  // Get target route
+  Future<String?> getTargetRoute() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_targetRouteKey);
+  }
+
+  // Clear target route
+  Future<void> clearTargetRoute() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_targetRouteKey);
+  }
+
   // Logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -159,7 +158,7 @@ class AuthService {
   Future<void> _saveAuthData(String token, String userId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
-    await prefs.setString('user_id', userId); // Save user ID
+    await prefs.setString('user_id', userId);
   }
 
   // Fetch user data by ID
@@ -175,16 +174,12 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final userData = json.decode(response.body);
-        // Save the fetched full user data
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_userKey, json.encode(userData));
         return User.fromJson(userData);
-      } else {
-        print('Failed to fetch user data: ${response.statusCode}');
-        return null;
       }
+      return null;
     } catch (e) {
-      print('Error fetching user data: $e');
       return null;
     }
   }

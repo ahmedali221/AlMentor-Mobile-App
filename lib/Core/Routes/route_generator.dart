@@ -7,15 +7,41 @@ import '../../pages/home/home_page.dart';
 import '../../pages/courses/coursesDetails.dart';
 import '../../pages/Programs/ProgramDetails.dart';
 import '../../pages/instructors/instructor_details.dart';
+import '../../pages/my courses/userCourses.dart';
+import '../../pages/auth/loginPage.dart';
 import '../Providers/language_provider.dart';
 
 class RouteGenerator {
+  static const _protectedRoutes = [
+    '/user_courses',
+    '/lessons_viewer',
+  ];
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments as Map<String, dynamic>?;
+    final requiresAuth = _protectedRoutes.contains(settings.name);
+
+    Widget wrapWithAuthGuardIfNeeded(Widget page) {
+      return requiresAuth
+          ? AuthGuard(
+              child: page,
+              requiresAuth: true,
+              targetRoute: settings.name,
+            )
+          : page;
+    }
 
     switch (settings.name) {
       case '/':
         return MaterialPageRoute(builder: (_) => const HomePage());
+
+      case '/login':
+        return MaterialPageRoute(builder: (_) => const LoginPage());
+
+      case '/user_courses':
+        return MaterialPageRoute(
+          builder: (_) => wrapWithAuthGuardIfNeeded(const UserCourses()),
+        );
 
       case '/lessons_viewer':
         if (args == null ||
@@ -26,8 +52,8 @@ class RouteGenerator {
           return _errorRoute();
         }
         return MaterialPageRoute(
-          builder: (_) => AuthGuard(
-            child: LessonViewerPage(
+          builder: (_) => wrapWithAuthGuardIfNeeded(
+            LessonViewerPage(
               course: args['course'],
               modules: args['modules'],
               lessons: args['lessons'],
@@ -80,14 +106,10 @@ class RouteGenerator {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              AppTranslations.getText('error_title', locale),
-            ),
+            title: Text(AppTranslations.getText('error_title', locale)),
           ),
           body: Center(
-            child: Text(
-              AppTranslations.getText('error_route_message', locale),
-            ),
+            child: Text(AppTranslations.getText('error_route_message', locale)),
           ),
         );
       },
