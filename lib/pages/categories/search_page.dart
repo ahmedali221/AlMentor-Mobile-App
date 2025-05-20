@@ -1,4 +1,6 @@
 import 'package:almentor_clone/Core/Constants/apiConstants.dart';
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/pages/categories/categoryCourses.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -72,9 +74,8 @@ class _SearchPageState extends State<SearchPage> {
             categories =
                 (data['data'] as List).map<Map<String, dynamic>>((category) {
               final id = category['_id'] ?? '';
-              final name = category['name']?['en'] ??
-                  category['name']?['en'] ??
-                  'Unknown';
+              final name = category['name']?[
+                  context.read<LanguageProvider>().currentLocale.languageCode];
               final randomColor =
                   _categoryColors[id.hashCode.abs() % _categoryColors.length];
               final randomIcon =
@@ -129,7 +130,9 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -137,18 +140,19 @@ class _SearchPageState extends State<SearchPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           Align(
-            alignment: Alignment.center,
-            child: Text("Explore Categories",
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                )),
+            alignment: isRtl ? Alignment.centerRight : Alignment.centerLeft,
+            child: Text(
+              AppTranslations.getText('explore_categories', locale),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          SizedBox(
-            height: 12,
-          ),
-          // Search bar
+          const SizedBox(height: 12),
+
+          // Search bar with RTL support
           Container(
             margin: const EdgeInsets.only(bottom: 18),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -158,19 +162,18 @@ class _SearchPageState extends State<SearchPage> {
             ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: () {}, // No need for onTap, search is live
-                  child: Icon(Icons.search, color: Theme.of(context).hintColor),
-                ),
+                Icon(Icons.search, color: Theme.of(context).hintColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     style: TextStyle(
                         color: Theme.of(context).textTheme.bodyLarge?.color),
-                    textAlign: TextAlign.right,
+                    textDirection:
+                        isRtl ? TextDirection.rtl : TextDirection.ltr,
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                     decoration: InputDecoration(
-                      hintText: 'What do you want to learn?',
+                      hintText: AppTranslations.getText('search_hint', locale),
                       hintStyle: TextStyle(
                           color: Theme.of(context).hintColor, fontSize: 16),
                       border: InputBorder.none,
@@ -183,13 +186,21 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
 
-          // Loading or error or content
+          // Status messages
           if (_isLoading)
-            const Center(child: CircularProgressIndicator())
+            Center(
+              child: Column(
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 8),
+                  Text(AppTranslations.getText('loading', locale)),
+                ],
+              ),
+            )
           else if (_errorMessage.isNotEmpty)
             Center(
               child: Text(
-                _errorMessage,
+                AppTranslations.getText('error_loading', locale),
                 style: TextStyle(
                   color: Theme.of(context)
                       .textTheme
@@ -204,14 +215,15 @@ class _SearchPageState extends State<SearchPage> {
               padding: const EdgeInsets.all(32.0),
               child: Center(
                 child: Text(
-                  'No Results found',
+                  AppTranslations.getText('no_results', locale),
                   style: TextStyle(
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.color
-                          ?.withAlpha((0.7 * 255).toInt()),
-                      fontSize: 18),
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withAlpha((0.7 * 255).toInt()),
+                    fontSize: 18,
+                  ),
                 ),
               ),
             )

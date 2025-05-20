@@ -1,13 +1,16 @@
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/pages/instructors/instructors.dart';
+import 'package:almentor_clone/pages/my%20courses/userCourses.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../Core/Providers/themeProvider.dart';
+import '../../Core/Providers/themeProvider.dart';
 
-import 'profile/account_page.dart';
-import '../pages/clips_page.dart';
-import 'categories/search_page.dart';
-import '../pages/mainPage.dart';
-import 'ai-chat/ai_mentor_page.dart';
+import '../profile/account_page.dart';
+import '../clips_page.dart';
+import '../categories/search_page.dart';
+import '../mainPage.dart';
+import '../ai-chat/ai_mentor_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,6 +28,7 @@ class _HomePageState extends State<HomePage> {
     SearchPage(),
     Instructors(),
     MainPage(),
+    UserCourses(),
   ];
 
   void _onNavBarTap(int index) {
@@ -36,7 +40,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
     final isDark = themeProvider.isDarkMode;
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
 
     return Scaffold(
       backgroundColor:
@@ -47,7 +54,7 @@ class _HomePageState extends State<HomePage> {
             : Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
-          'Almentor',
+          AppTranslations.getText('app_name', locale),
           style: TextStyle(
             color: isDark
                 ? Colors.white
@@ -55,6 +62,19 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         actions: [
+          // Language switcher
+          TextButton(
+            onPressed: () {
+              languageProvider.changeLanguage(isRtl ? 'en' : 'ar');
+            },
+            child: Text(
+              isRtl ? 'English' : 'العربية',
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ),
+          // Theme switcher
           IconButton(
             icon: Icon(
               themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
@@ -79,16 +99,16 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Almentor',
-                    style: TextStyle(
+                    AppTranslations.getText('app_name', locale),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Your Learning Companion',
+                    AppTranslations.getText('app_subtitle', locale),
                     style: TextStyle(
                       color: Colors.white.withAlpha((0.9 * 255).toInt()),
                       fontSize: 16,
@@ -105,21 +125,22 @@ class _HomePageState extends State<HomePage> {
               title: Row(
                 children: [
                   Text(
-                    'Try Your Mentor',
+                    AppTranslations.getText('try_mentor', locale),
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'NEW',
-                      style: TextStyle(
+                      AppTranslations.getText('new_badge', locale),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -133,42 +154,33 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AiMentorPage(),
+                    builder: (context) => const AiMentorPage(),
                   ),
                 );
               },
             ),
             Divider(color: isDark ? Colors.grey[700] : Colors.grey[300]),
-            ListTile(
-              leading: Icon(Icons.settings,
-                  color: isDark ? Colors.white : Colors.black),
-              title: Text('Subscription',
-                  style:
-                      TextStyle(color: isDark ? Colors.white : Colors.black)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/subscribe');
-              },
+            // Drawer menu items
+            _buildDrawerItem(
+              context,
+              Icons.card_membership,
+              'subscription',
+              isDark,
+              () => Navigator.pushNamed(context, '/subscribe'),
             ),
-            ListTile(
-              leading: Icon(Icons.settings,
-                  color: isDark ? Colors.white : Colors.black),
-              title: Text('Settings',
-                  style:
-                      TextStyle(color: isDark ? Colors.white : Colors.black)),
-              onTap: () {
-                Navigator.pop(context);
-              },
+            _buildDrawerItem(
+              context,
+              Icons.settings,
+              'settings',
+              isDark,
+              () => Navigator.pop(context),
             ),
-            ListTile(
-              leading: Icon(Icons.help_outline,
-                  color: isDark ? Colors.white : Colors.black),
-              title: Text('Help & Support',
-                  style:
-                      TextStyle(color: isDark ? Colors.white : Colors.black)),
-              onTap: () {
-                Navigator.pop(context);
-              },
+            _buildDrawerItem(
+              context,
+              Icons.help_outline,
+              'help_support',
+              isDark,
+              () => Navigator.pop(context),
             ),
           ],
         ),
@@ -183,29 +195,48 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: isDark
             ? Colors.grey[900]
             : Theme.of(context).scaffoldBackgroundColor,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Account',
+            icon: const Icon(Icons.person),
+            label: AppTranslations.getText('nav_account', locale),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.video_library),
-            label: 'Clips',
+            icon: const Icon(Icons.video_library),
+            label: AppTranslations.getText('nav_clips', locale),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: const Icon(Icons.search),
+            label: AppTranslations.getText('nav_search', locale),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Instructors',
+            icon: const Icon(Icons.school),
+            label: AppTranslations.getText('nav_instructors', locale),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: AppTranslations.getText('nav_home', locale),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.book),
+            label: AppTranslations.getText('nav_my_courses', locale),
           ),
         ],
       ),
     );
   }
+}
+
+Widget _buildDrawerItem(BuildContext context, IconData icon, String textKey,
+    bool isDark, VoidCallback onTap) {
+  final locale =
+      Provider.of<LanguageProvider>(context).currentLocale.languageCode;
+
+  return ListTile(
+    leading: Icon(icon, color: isDark ? Colors.white : Colors.black),
+    title: Text(
+      AppTranslations.getText(textKey, locale),
+      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+    ),
+    onTap: onTap,
+  );
 }

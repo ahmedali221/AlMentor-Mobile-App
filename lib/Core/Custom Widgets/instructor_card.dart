@@ -1,107 +1,117 @@
 import 'package:flutter/material.dart';
 import '../../models/instructor.dart';
+import '../../Core/Localization/app_translations.dart';
+import '../../Core/Providers/language_provider.dart';
+import '../../Core/Providers/themeProvider.dart';
+import 'package:provider/provider.dart';
 
 class InstructorCard extends StatelessWidget {
   final Instructor instructor;
   final VoidCallback? onTap;
-  final bool isArabic;
+  final bool isDark;
+  final bool isRtl;
+  final String locale;
 
   const InstructorCard({
     super.key,
     required this.instructor,
+    required this.isDark,
+    required this.isRtl,
+    required this.locale,
     this.onTap,
-    this.isArabic = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final user = instructor.user;
-    final String name = isArabic
+    final String name = locale == 'ar'
         ? '${user.firstNameAr} ${user.lastNameAr}'
         : '${user.firstNameEn} ${user.lastNameEn}';
-    final String professionalTitle = isArabic
+    final String professionalTitle = locale == 'ar'
         ? instructor.professionalTitleAr
         : instructor.professionalTitleEn;
-    final String profilePicture = user.profilePicture;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Colors.grey[850] : Colors.white,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
+            if (!isDark)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment:
+              isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // Instructor Image with circular avatar
             Container(
               margin: const EdgeInsets.only(top: 16),
+              alignment: Alignment.center,
               child: CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: profilePicture.startsWith('http')
-                    ? NetworkImage(profilePicture) as ImageProvider
-                    : AssetImage(profilePicture),
-                child: profilePicture.isEmpty
-                    ? Icon(Icons.person, size: 40, color: Colors.grey[500])
+                backgroundColor: isDark ? Colors.grey[700] : Colors.grey[200],
+                backgroundImage: user.profilePicture.startsWith('http')
+                    ? NetworkImage(user.profilePicture)
+                    : AssetImage(user.profilePicture) as ImageProvider,
+                child: user.profilePicture.isEmpty
+                    ? Icon(Icons.person,
+                        size: 40,
+                        color: isDark ? Colors.grey[400] : Colors.grey[500])
                     : null,
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment:
+                    isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                  // Instructor Name
                   Text(
                     name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
-                    textAlign: TextAlign.center,
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // Professional Title
                   Text(
                     professionalTitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                       height: 1.4,
                     ),
-                    textAlign: TextAlign.center,
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  // Rating and courses count
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        isRtl ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
+                      if (isRtl) const Spacer(),
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      const SizedBox(width: 8),
                       Text(
                         '•',
                         style: TextStyle(
-                          color: Colors.grey[400],
+                          color: isDark ? Colors.grey[600] : Colors.grey[400],
                           fontSize: 12,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      if (!isRtl) const Spacer(),
                     ],
                   ),
                 ],
@@ -116,41 +126,45 @@ class InstructorCard extends StatelessWidget {
 
 class HorizontalInstructorList extends StatelessWidget {
   final List<Instructor> instructors;
-  final String? title;
-  final String? seeAllText;
+  final String? titleKey;
+  final String? seeAllKey;
   final Function(Instructor)? onInstructorTap;
-  final bool isArabic;
 
   const HorizontalInstructorList({
     super.key,
     required this.instructors,
-    this.title,
-    this.seeAllText,
+    this.titleKey,
+    this.seeAllKey,
     this.onInstructorTap,
-    this.isArabic = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        // Title and See All
-        if (title != null)
+        if (titleKey != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  title!,
-                  style: const TextStyle(
+                  AppTranslations.getText(titleKey!, locale),
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                if (seeAllText != null)
+                if (seeAllKey != null)
                   TextButton(
                     onPressed: () {},
                     style: TextButton.styleFrom(
@@ -160,18 +174,18 @@ class HorizontalInstructorList extends StatelessWidget {
                     child: Row(
                       children: [
                         Text(
-                          seeAllText!,
-                          style: const TextStyle(
-                            color: Color(0xFF00A0E3),
+                          AppTranslations.getText(seeAllKey!, locale),
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward,
+                        Icon(
+                          isRtl ? Icons.arrow_back : Icons.arrow_forward,
                           size: 16,
-                          color: Color(0xFF00A0E3),
+                          color: Theme.of(context).primaryColor,
                         ),
                       ],
                     ),
@@ -180,21 +194,22 @@ class HorizontalInstructorList extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 16),
-
-        // Instructor Cards
         SizedBox(
-          height: 200, // Reduced height to match almentor style
+          height: 200,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
+            reverse: isRtl,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             itemCount: instructors.length,
             itemBuilder: (context, index) {
               return InstructorCard(
                 instructor: instructors[index],
+                isDark: isDark,
+                isRtl: isRtl,
+                locale: locale,
                 onTap: onInstructorTap != null
                     ? () => onInstructorTap!(instructors[index])
                     : null,
-                isArabic: isArabic,
               );
             },
           ),

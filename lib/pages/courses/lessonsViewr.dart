@@ -1,7 +1,10 @@
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/pages/courses/certificatePage.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import '../../Core/Localization/app_translations.dart';
 import '../../models/course.dart';
 import '../../models/module.dart';
 import '../../models/lesson.dart';
@@ -159,15 +162,20 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
             color: Colors.black,
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: _chewieController != null &&
+              child: Stack(
+                children: [
+                  if (_chewieController != null &&
                       _chewieController!
-                          .videoPlayerController.value.isInitialized
-                  ? Chewie(controller: _chewieController!)
-                  : const Center(
+                          .videoPlayerController.value.isInitialized)
+                    Chewie(controller: _chewieController!)
+                  else
+                    Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFeb2027),
+                        color: Theme.of(context).primaryColor,
                       ),
                     ),
+                ],
+              ),
             ),
           ),
 
@@ -247,7 +255,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                           _buildModuleNavItem(
                             context,
                             Icons.arrow_upward,
-                            "Previous Module",
+                            AppTranslations.getText(
+                                'previous_module',
+                                context
+                                    .read<LanguageProvider>()
+                                    .currentLocale
+                                    .languageCode),
                             previousModule,
                             () {
                               final firstLessonId =
@@ -261,7 +274,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                           _buildModuleNavItem(
                             context,
                             Icons.folder,
-                            "Current Module",
+                            AppTranslations.getText(
+                                'current_module',
+                                context
+                                    .read<LanguageProvider>()
+                                    .currentLocale
+                                    .languageCode),
                             currentModule,
                             null,
                           ),
@@ -269,7 +287,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                           _buildModuleNavItem(
                             context,
                             Icons.arrow_downward,
-                            "Next Module",
+                            AppTranslations.getText(
+                                'next_module',
+                                context
+                                    .read<LanguageProvider>()
+                                    .currentLocale
+                                    .languageCode),
                             nextModule,
                             () {
                               final firstLessonId = nextModule.lessons.first.id;
@@ -287,7 +310,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                 if (previousLessons.isNotEmpty)
                   _buildLessonsList(
                     context,
-                    "Previous Lessons",
+                    AppTranslations.getText(
+                        'previous_lessons',
+                        context
+                            .read<LanguageProvider>()
+                            .currentLocale
+                            .languageCode),
                     previousLessons,
                     isDark,
                     (index) => _changeLesson(index),
@@ -296,7 +324,12 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
                 if (nextLessons.isNotEmpty)
                   _buildLessonsList(
                     context,
-                    "Next Lessons",
+                    AppTranslations.getText(
+                        'next_lessons',
+                        context
+                            .read<LanguageProvider>()
+                            .currentLocale
+                            .languageCode),
                     nextLessons,
                     isDark,
                     (index) => _changeLesson(currentIndex + 1 + index),
@@ -327,7 +360,8 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
           children: [
             ElevatedButton.icon(
               icon: const Icon(Icons.arrow_back),
-              label: const Text("Previous"),
+              label: Text(AppTranslations.getText('previous_lesson',
+                  context.read<LanguageProvider>().currentLocale.languageCode)),
               onPressed: currentIndex > 0
                   ? () => _changeLesson(currentIndex - 1)
                   : null,
@@ -340,7 +374,19 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
             ElevatedButton.icon(
               icon: const Icon(Icons.arrow_forward),
               label: Text(
-                currentIndex == widget.lessons.length - 1 ? "Finish" : "Next",
+                currentIndex == widget.lessons.length - 1
+                    ? AppTranslations.getText(
+                        'course_completed',
+                        context
+                            .read<LanguageProvider>()
+                            .currentLocale
+                            .languageCode)
+                    : AppTranslations.getText(
+                        'next_lesson',
+                        context
+                            .read<LanguageProvider>()
+                            .currentLocale
+                            .languageCode),
               ),
               onPressed: _onNextPressed,
               style: ElevatedButton.styleFrom(

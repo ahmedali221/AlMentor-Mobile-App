@@ -1,4 +1,6 @@
 import 'package:almentor_clone/Core/Custom%20Widgets/instructor_card.dart';
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -86,10 +88,39 @@ class _InstructorsState extends State<Instructors> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
 
     return Scaffold(
+      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+      appBar: AppBar(
+        title: Text(
+          AppTranslations.getText('instructors', locale),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        elevation: 0,
+      ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppTranslations.getText('loading_instructors', locale),
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : SingleChildScrollView(
               controller: _scrollController,
               child: Column(
@@ -110,12 +141,17 @@ class _InstructorsState extends State<Instructors> {
                     itemBuilder: (context, index) {
                       return InstructorCard(
                         instructor: currentInstructors[index],
+                        isDark: isDark,
+                        isRtl: isRtl,
+                        locale: locale,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => InstructorDetailsPage(
                                 instructor: currentInstructors[index],
+                                isRtl: isRtl,
+                                locale: locale,
                               ),
                             ),
                           );
@@ -124,14 +160,17 @@ class _InstructorsState extends State<Instructors> {
                     },
                   ),
 
-                  // Pagination
+                  // Pagination with RTL support
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left),
+                          icon: Icon(
+                            isRtl ? Icons.chevron_right : Icons.chevron_left,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
                           onPressed: currentPage > 1
                               ? () => changePage(currentPage - 1)
                               : null,
@@ -144,21 +183,28 @@ class _InstructorsState extends State<Instructors> {
                               child: CircleAvatar(
                                 radius: 16,
                                 backgroundColor: i == currentPage
-                                    ? Colors.red
-                                    : Colors.grey[300],
+                                    ? Theme.of(context).primaryColor
+                                    : isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey[300],
                                 child: Text(
                                   '$i',
                                   style: TextStyle(
                                     color: i == currentPage
                                         ? Colors.white
-                                        : Colors.black,
+                                        : isDark
+                                            ? Colors.white70
+                                            : Colors.black54,
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right),
+                          icon: Icon(
+                            isRtl ? Icons.chevron_left : Icons.chevron_right,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
                           onPressed: currentPage < totalPages
                               ? () => changePage(currentPage + 1)
                               : null,
@@ -170,7 +216,7 @@ class _InstructorsState extends State<Instructors> {
                   // Become Instructor Section
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.6),
                       image: const DecorationImage(
@@ -184,36 +230,41 @@ class _InstructorsState extends State<Instructors> {
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: isRtl
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'How To Become an Instructor?',
-                          style: TextStyle(
+                        Text(
+                          AppTranslations.getText('become_instructor', locale),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
+                          textAlign: isRtl ? TextAlign.right : TextAlign.left,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'And teach people all around the MENA region?',
-                          style: TextStyle(
+                        Text(
+                          AppTranslations.getText('teach_mena', locale),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
+                          textAlign: isRtl ? TextAlign.right : TextAlign.left,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: Theme.of(context).primaryColor,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 32,
                               vertical: 16,
                             ),
                           ),
-                          child: const Text(
-                            'Apply Now',
-                            style: TextStyle(
+                          child: Text(
+                            AppTranslations.getText('apply_now', locale),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                             ),

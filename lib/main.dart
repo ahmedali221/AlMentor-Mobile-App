@@ -7,9 +7,11 @@ import 'package:almentor_clone/pages/subs%20and%20payment/craditpayment.dart';
 import 'package:almentor_clone/pages/subs%20and%20payment/subscribe.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
 import 'package:almentor_clone/Core/Providers/themeProvider.dart';
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/Core/Themes/lightTheme.dart';
 import 'package:almentor_clone/Core/Themes/darkTheme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +21,7 @@ import 'pages/auth/signUpPage.dart';
 import 'pages/profile/account_page.dart';
 import 'pages/clips_page.dart';
 import 'pages/categories/search_page.dart';
-import 'pages/home_page.dart';
+import 'pages/home/home_page.dart';
 import 'services/auth_service.dart';
 
 void main() async {
@@ -40,8 +42,11 @@ void main() async {
   final isLoggedIn = await authService.isLoggedIn();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+      ],
       child: MyApp(isLoggedIn: isLoggedIn),
     ),
   );
@@ -68,8 +73,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer2<ThemeProvider, LanguageProvider>(
+      builder: (context, themeProvider, languageProvider, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Almentor Clone',
@@ -81,7 +86,7 @@ class _MyAppState extends State<MyApp> {
           onGenerateRoute: RouteGenerator.generateRoute,
           navigatorObservers: [RouteObserver()],
           routes: {
-            '/login': (context) => Loginpage(),
+            '/login': (context) => LoginPage(),
             '/signup': (context) => SignUpPage(),
             '/home': (context) => const HomePage(),
             '/instructors': (context) => const Instructors(),
@@ -90,6 +95,17 @@ class _MyAppState extends State<MyApp> {
             '/search': (context) => const SearchPage(),
             '/subscribe': (context) => const SubscribePage(),
           },
+          locale: languageProvider.currentLocale,
+          supportedLocales: const [
+            Locale('en'),
+            Locale('ar'),
+          ],
+          localizationsDelegates: const [
+            // Add required delegates here
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
         );
       },
     );

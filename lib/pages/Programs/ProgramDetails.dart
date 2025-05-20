@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Core/Providers/themeProvider.dart';
+import '../../Core/Providers/language_provider.dart';
+import '../../Core/Localization/app_translations.dart';
 import '../../models/program.dart';
 import '../../models/instructor.dart';
 import '../../services/program_service.dart';
@@ -86,7 +88,10 @@ class _ProgramDetailsState extends State<ProgramDetails> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = context.read<LanguageProvider>();
     final isDark = themeProvider.isDarkMode;
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
 
     final textColor = isDark ? Colors.white : Colors.black;
     final subTextColor = isDark ? Colors.grey[300] : Colors.grey[700];
@@ -95,198 +100,297 @@ class _ProgramDetailsState extends State<ProgramDetails> {
     return Scaffold(
       backgroundColor:
           isDark ? Colors.grey[900] : Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: isDark
+            ? Colors.grey[900]
+            : Theme.of(context).appBarTheme.backgroundColor,
+        leading: IconButton(
+          icon: Icon(
+            isRtl ? Icons.arrow_forward : Icons.arrow_back,
+            color: textColor,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          AppTranslations.getText('program_details', locale),
+          style: TextStyle(color: textColor),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppTranslations.getText('loading_program', locale),
+                    style: TextStyle(color: textColor),
+                  ),
+                ],
+              ),
+            )
           : error.isNotEmpty
               ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      error,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
-                    ),
+                  child: Text(
+                    AppTranslations.getText('error_loading_program', locale),
+                    style: const TextStyle(color: Colors.red),
                   ),
                 )
               : program == null
-                  ? const Center(child: Text('Program not found'))
-                  : CustomScrollView(
-                      slivers: [
-                        // App Bar
-                        SliverAppBar(
-                          expandedHeight: 200,
-                          pinned: true,
-                          backgroundColor: isDark
-                              ? Colors.grey[900]
-                              : Theme.of(context).appBarTheme.backgroundColor,
-                          flexibleSpace: FlexibleSpaceBar(
-                            title: Text(
-                              program!.title['en'] ?? '',
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 20,
+                  ? Center(
+                      child: Text(
+                        AppTranslations.getText('program_not_found', locale),
+                        style: TextStyle(color: textColor),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: isRtl
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            // Top Card: Program Image + Title/Description
+                            Card(
+                              color: cardColor,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                            ),
-                            background: Image.network(
-                              program!.thumbnail,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.error),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Content
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Description
-                                Text(
-                                  program!.description['en'] ?? '',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: subTextColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Program Stats
-                                Row(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildStat(
-                                      Icons.play_lesson,
-                                      '${program!.courseDetails.length} Courses',
-                                      color: Theme.of(context).primaryColor,
-                                      textColor: textColor,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        program!.thumbnail,
+                                        width: 110,
+                                        height: 110,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                          width: 110,
+                                          height: 110,
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.error),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
-                                    _buildStat(
-                                      Icons.access_time,
-                                      '${program!.totalDuration} minutes',
-                                      color: Theme.of(context).primaryColor,
-                                      textColor: textColor,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: isRtl
+                                            ? CrossAxisAlignment.end
+                                            : CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            program!.title[locale] ?? '',
+                                            style: TextStyle(
+                                              color: textColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22,
+                                            ),
+                                            textAlign: isRtl
+                                                ? TextAlign.right
+                                                : TextAlign.left,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            program!.description[locale] ?? '',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: subTextColor,
+                                            ),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: isRtl
+                                                ? TextAlign.right
+                                                : TextAlign.left,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 24),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
 
-                                // Learning Outcomes
-                                Text(
-                                  'Learning Outcomes',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
+                            // Program Stats
+                            Row(
+                              textDirection:
+                                  isRtl ? TextDirection.rtl : TextDirection.ltr,
+                              children: [
+                                _buildStat(
+                                  Icons.play_lesson,
+                                  AppTranslations.getText(
+                                    'courses_count',
+                                    locale,
+                                    args: [program!.courseDetails.length],
                                   ),
+                                  color: Theme.of(context).primaryColor,
+                                  textColor: textColor,
                                 ),
-                                const SizedBox(height: 12),
-                                ...program!.learningOutcomes
-                                    .map((outcome) => Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 8),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text('• ',
-                                                  style: TextStyle(
-                                                      color: textColor,
-                                                      fontSize: 18)),
-                                              Expanded(
-                                                child: Text(
-                                                  outcome.en,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: textColor,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                const SizedBox(width: 16),
+                                _buildStat(
+                                  Icons.access_time,
+                                  AppTranslations.getText(
+                                    'duration_minutes',
+                                    locale,
+                                    args: [program!.totalDuration],
+                                  ),
+                                  color: Theme.of(context).primaryColor,
+                                  textColor: textColor,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Learning Outcomes
+                            Text(
+                              AppTranslations.getText(
+                                  'learning_outcomes', locale),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                              textAlign:
+                                  isRtl ? TextAlign.right : TextAlign.left,
+                            ),
+                            const SizedBox(height: 12),
+                            ...program!.learningOutcomes.map(
+                              (outcome) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  textDirection: isRtl
+                                      ? TextDirection.rtl
+                                      : TextDirection.ltr,
+                                  children: [
+                                    Text(
+                                      '• ',
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        locale == 'ar'
+                                            ? outcome.ar
+                                            : outcome.en,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: textColor,
+                                        ),
+                                        textAlign: isRtl
+                                            ? TextAlign.right
+                                            : TextAlign.left,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Instructors Section
+                            if (instructors.isNotEmpty) ...[
+                              Text(
+                                AppTranslations.getText(
+                                    'program_instructors', locale),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                                textAlign:
+                                    isRtl ? TextAlign.right : TextAlign.left,
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 200,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  reverse: isRtl,
+                                  itemCount: instructors.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 16),
+                                  itemBuilder: (context, index) {
+                                    final instructor = instructors[index];
+                                    return Column(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 30,
+                                          backgroundImage: NetworkImage(
+                                            instructor.user.profilePicture,
                                           ),
-                                        )),
-                                const SizedBox(height: 24),
-
-                                // Instructors Section
-                                if (instructors.isNotEmpty) ...[
-                                  Text(
-                                    'Program Instructors',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    height: 200,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: instructors.length,
-                                      separatorBuilder: (_, __) =>
-                                          const SizedBox(width: 16),
-                                      itemBuilder: (context, index) {
-                                        final instructor = instructors[index];
-                                        return Column(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 30,
-                                              backgroundImage: NetworkImage(
-                                                  instructor
-                                                      .user.profilePicture),
-                                              backgroundColor: Colors.grey[400],
-                                              child: instructor.user
-                                                      .profilePicture.isEmpty
-                                                  ? const Icon(Icons.person,
-                                                      color: Colors.white,
-                                                      size: 30)
-                                                  : null,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              '${instructor.user.firstNameEn} ${instructor.user.lastNameEn}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: textColor,
-                                              ),
-                                            ),
-                                            Text(
-                                              instructor.professionalTitleEn,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: subTextColor,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                ],
-
-                                // Courses Section
-                                Text(
-                                  'Program Courses',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                  ),
+                                          backgroundColor: Colors.grey[400],
+                                          child: instructor
+                                                  .user.profilePicture.isEmpty
+                                              ? const Icon(Icons.person,
+                                                  color: Colors.white, size: 30)
+                                              : null,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          locale == 'ar'
+                                              ? '${instructor.user.firstNameAr} ${instructor.user.lastNameAr}'
+                                              : '${instructor.user.firstNameEn} ${instructor.user.lastNameEn}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: textColor,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        Text(
+                                          locale == 'ar'
+                                              ? instructor.professionalTitleAr
+                                              : instructor.professionalTitleEn,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: subTextColor,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
-                                const SizedBox(height: 16),
-                                ...program!.courseDetails.map(
-                                  (course) => Card(
-                                    color: cardColor,
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.all(16),
-                                      leading: ClipRRect(
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+
+                            // Courses Section
+                            Text(
+                              AppTranslations.getText(
+                                  'program_courses', locale),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                              textAlign:
+                                  isRtl ? TextAlign.right : TextAlign.left,
+                            ),
+                            const SizedBox(height: 16),
+                            ...program!.courseDetails.map(
+                              (course) => Card(
+                                color: cardColor,
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: Stack(
+                                    children: [
+                                      ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
                                           course['thumbnail'] ?? '',
@@ -303,70 +407,76 @@ class _ProgramDetailsState extends State<ProgramDetails> {
                                           ),
                                         ),
                                       ),
-                                      title: Text(
-                                        course['title']?['en'] ?? '',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor,
+                                      if (course['isFree'] == true)
+                                        Positioned(
+                                          top: 4,
+                                          right: 4,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              AppTranslations.getText(
+                                                  'free_course', locale),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  title: Text(
+                                    course['title']?[locale] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor,
+                                    ),
+                                    textAlign: isRtl
+                                        ? TextAlign.right
+                                        : TextAlign.left,
+                                  ),
+                                  subtitle: Text(
+                                    course['description']?[locale] ?? '',
+                                    style: TextStyle(
+                                      color: subTextColor,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: isRtl
+                                        ? TextAlign.right
+                                        : TextAlign.left,
+                                  ),
+                                  trailing: Icon(
+                                    isRtl
+                                        ? Icons.arrow_back_ios_new
+                                        : Icons.arrow_forward_ios,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => CourseDetails(
+                                          courseId: course['id'],
                                         ),
                                       ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            course['description']?['en'] ?? '',
-                                            style:
-                                                TextStyle(color: subTextColor),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.access_time,
-                                                  size: 16,
-                                                  color: subTextColor),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${course['duration']} minutes',
-                                                style: TextStyle(
-                                                    color: subTextColor),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              Icon(Icons.bar_chart,
-                                                  size: 16,
-                                                  color: subTextColor),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                course['level']?['en'] ?? '',
-                                                style: TextStyle(
-                                                    color: subTextColor),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                      trailing: Icon(Icons.arrow_forward_ios,
-                                          size: 16, color: textColor),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => CourseDetails(
-                                                courseId: course['_id']),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
     );
   }
@@ -374,25 +484,24 @@ class _ProgramDetailsState extends State<ProgramDetails> {
   Widget _buildStat(IconData icon, String text,
       {Color? color, Color? textColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: (color ?? Theme.of(context).primaryColor).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color ?? Theme.of(context).primaryColor),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: textColor ?? color ?? Theme.of(context).primaryColor,
-              fontWeight: FontWeight.bold,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: (color ?? Theme.of(context).primaryColor).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color ?? Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: TextStyle(
+                color: textColor ?? color ?? Theme.of(context).primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ));
   }
 }

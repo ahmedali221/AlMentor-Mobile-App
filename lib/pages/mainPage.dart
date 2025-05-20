@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
 
+// ...existing imports...
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -87,8 +90,11 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
-    final locale = 'en';
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final locale = languageProvider.currentLocale.languageCode;
+    final isRtl = languageProvider.isArabic;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
@@ -141,12 +147,15 @@ class _MainPageState extends State<MainPage> {
                       ],
                     ),
                     child: TextField(
-                      enabled: false, // Disable actual text input
+                      enabled: false,
+                      textDirection:
+                          isRtl ? TextDirection.rtl : TextDirection.ltr,
+                      textAlign: isRtl ? TextAlign.right : TextAlign.left,
                       style: TextStyle(
                           color: isDark ? Colors.white : Colors.black),
                       decoration: InputDecoration(
                         hintText:
-                            "Search for courses, programs, instructors...",
+                            AppTranslations.getText('search_hint', locale),
                         hintStyle: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
@@ -174,8 +183,10 @@ class _MainPageState extends State<MainPage> {
                     height: 180,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: isRtl ? Alignment.topRight : Alignment.topLeft,
+                        end: isRtl
+                            ? Alignment.bottomLeft
+                            : Alignment.bottomRight,
                         colors: [
                           Theme.of(context).primaryColor.withOpacity(0.8),
                           Theme.of(context).primaryColor,
@@ -185,7 +196,8 @@ class _MainPageState extends State<MainPage> {
                     child: Stack(
                       children: [
                         Positioned(
-                          right: 0,
+                          right: isRtl ? null : 0,
+                          left: isRtl ? 0 : null,
                           bottom: 0,
                           child: Opacity(
                             opacity: 0.2,
@@ -199,27 +211,35 @@ class _MainPageState extends State<MainPage> {
                         Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: isRtl
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Start Learning Today",
-                                style: TextStyle(
+                                AppTranslations.getText(
+                                    'start_learning', locale),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                 ),
+                                textAlign:
+                                    isRtl ? TextAlign.right : TextAlign.left,
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                "Access thousands of courses from top instructors",
+                                AppTranslations.getText(
+                                    'access_courses', locale),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: 16,
                                 ),
+                                textAlign:
+                                    isRtl ? TextAlign.right : TextAlign.left,
                               ),
                               const SizedBox(height: 16),
-                              ElevatedButton(
+                              ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor:
@@ -227,9 +247,24 @@ class _MainPageState extends State<MainPage> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
                                 ),
                                 onPressed: () {},
-                                child: const Text("Explore Now"),
+                                icon: Icon(
+                                  isRtl
+                                      ? Icons.arrow_back
+                                      : Icons.arrow_forward,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  AppTranslations.getText(
+                                      'explore_now', locale),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -247,6 +282,7 @@ class _MainPageState extends State<MainPage> {
                 future: _coursesFuture,
                 isDark: isDark,
                 locale: locale,
+                isRtl: isRtl,
               ),
             ),
 
@@ -256,6 +292,7 @@ class _MainPageState extends State<MainPage> {
                 future: _programsFuture,
                 isDark: isDark,
                 locale: locale,
+                isRtl: isRtl,
               ),
             ),
 
@@ -265,33 +302,7 @@ class _MainPageState extends State<MainPage> {
                 future: _instructorsFuture,
                 isDark: isDark,
                 locale: locale,
-              ),
-            ),
-
-            // Footer
-            SliverToBoxAdapter(
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                color: isDark ? Colors.grey[850] : Colors.grey[200],
-                child: Column(
-                  children: [
-                    Text(
-                      "Almentor Learning Platform",
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "© 2023 All Rights Reserved",
-                      style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
+                isRtl: isRtl,
               ),
             ),
           ],

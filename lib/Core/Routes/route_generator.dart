@@ -1,10 +1,13 @@
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../Guards/auth_guard.dart';
 import '../../pages/courses/lessonsViewr.dart';
-import '../../pages/home_page.dart';
+import '../../pages/home/home_page.dart';
 import '../../pages/courses/coursesDetails.dart';
 import '../../pages/Programs/ProgramDetails.dart';
 import '../../pages/instructors/instructor_details.dart';
+import '../Providers/language_provider.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -50,15 +53,18 @@ class RouteGenerator {
         );
 
       case '/instructor_details':
-        if (args == null || !args.containsKey('instructorId')) {
+        if (args == null || !args.containsKey('instructor')) {
           return _errorRoute();
         }
         return MaterialPageRoute(
-          builder: (_) => InstructorDetailsPage(
-            instructor: args[
-                'instructor'], // Changed to pass the full instructor object
-            isArabic: args['isArabic'] ?? false,
-          ),
+          builder: (context) {
+            final languageProvider = Provider.of<LanguageProvider>(context);
+            return InstructorDetailsPage(
+              instructor: args['instructor'],
+              locale: languageProvider.currentLocale.languageCode,
+              isRtl: languageProvider.isArabic,
+            );
+          },
         );
 
       default:
@@ -68,12 +74,23 @@ class RouteGenerator {
 
   static Route<dynamic> _errorRoute() {
     return MaterialPageRoute(
-      builder: (_) => Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: const Center(
-          child: Text('Invalid route parameters or page not found'),
-        ),
-      ),
+      builder: (context) {
+        final languageProvider = Provider.of<LanguageProvider>(context);
+        final locale = languageProvider.currentLocale.languageCode;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              AppTranslations.getText('error_title', locale),
+            ),
+          ),
+          body: Center(
+            child: Text(
+              AppTranslations.getText('error_route_message', locale),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -21,7 +21,7 @@ class AuthGuard extends StatelessWidget {
 
         final isAuthenticated = snapshot.data ?? false;
         if (!isAuthenticated) {
-          return Loginpage();
+          return LoginPage();
         }
 
         return child;

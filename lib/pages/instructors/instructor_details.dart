@@ -1,3 +1,4 @@
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/instructor.dart';
@@ -8,12 +9,14 @@ import '../courses/coursesDetails.dart';
 
 class InstructorDetailsPage extends StatefulWidget {
   final Instructor instructor;
-  final bool isArabic;
+  final String locale;
+  final bool isRtl;
 
   const InstructorDetailsPage({
     super.key,
     required this.instructor,
-    this.isArabic = false,
+    required this.locale,
+    required this.isRtl,
   });
 
   @override
@@ -56,20 +59,21 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final isArabic = widget.isArabic;
     final instructor = widget.instructor;
     final user = instructor.user;
+    final isRtl = widget.isRtl;
+    final locale = widget.locale;
 
-    final String firstName = isArabic ? user.firstNameAr : user.firstNameEn;
-    final String lastName = isArabic ? user.lastNameAr : user.lastNameEn;
-    final String professionalTitle = isArabic
+    final String name = locale == 'ar'
+        ? '${user.firstNameAr} ${user.lastNameAr}'
+        : '${user.firstNameEn} ${user.lastNameEn}';
+    final String professionalTitle = locale == 'ar'
         ? instructor.professionalTitleAr
         : instructor.professionalTitleEn;
     final List<String> expertiseAreas =
-        isArabic ? instructor.expertiseAr : instructor.expertiseEn;
+        locale == 'ar' ? instructor.expertiseAr : instructor.expertiseEn;
     final String biography =
-        isArabic ? instructor.biographyAr : instructor.biographyEn;
-    final String profilePicture = user.profilePicture;
+        locale == 'ar' ? instructor.biographyAr : instructor.biographyEn;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.white,
@@ -82,22 +86,17 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
             backgroundColor: isDark ? Colors.grey[900] : Colors.white,
             leading: IconButton(
               icon: Icon(
-                isArabic ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
+                isRtl ? Icons.arrow_forward : Icons.arrow_back,
                 color: isDark ? Colors.white : Colors.black,
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  isDark ? Icons.light_mode : Icons.dark_mode,
-                  color: Theme.of(context).primaryColor,
-                ),
-                onPressed: () {
-                  themeProvider.toggleTheme();
-                },
+            title: Text(
+              AppTranslations.getText('instructor_details', locale),
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
               ),
-            ],
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -122,21 +121,25 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
                       padding: const EdgeInsets.only(bottom: 24),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: isRtl
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                         children: [
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.white,
-                            backgroundImage: profilePicture.isNotEmpty
-                                ? NetworkImage(profilePicture)
+                            backgroundImage: user.profilePicture.isNotEmpty
+                                ? NetworkImage(user.profilePicture)
                                 : null,
-                            child: profilePicture.isEmpty
+                            child: user.profilePicture.isEmpty
                                 ? Icon(Icons.person,
                                     size: 60, color: Colors.grey)
                                 : null,
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            '$firstName $lastName',
+                            name,
+                            textAlign: isRtl ? TextAlign.right : TextAlign.left,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 26,
@@ -152,6 +155,7 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
                           const SizedBox(height: 6),
                           Text(
                             professionalTitle,
+                            textAlign: isRtl ? TextAlign.right : TextAlign.left,
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 18,
@@ -169,9 +173,10 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
           // Main content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
                   // Social Media Links
                   if (instructor.socialMediaLinks.isNotEmpty)
@@ -194,21 +199,25 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
                   // Expertise Areas
                   if (expertiseAreas.isNotEmpty) ...[
                     Text(
-                      isArabic ? 'مجالات الخبرة' : 'Expertise Areas',
+                      AppTranslations.getText('expertise_areas', locale),
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black,
                       ),
+                      textAlign: isRtl ? TextAlign.right : TextAlign.left,
                     ),
                     const SizedBox(height: 12),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      textDirection:
+                          isRtl ? TextDirection.rtl : TextDirection.ltr,
                       children: expertiseAreas
                           .map((area) => Chip(
-                                label: Text(area),
-                                labelStyle: TextStyle(color: Colors.black),
+                                label: Text(
+                                  area,
+                                  textAlign:
+                                      isRtl ? TextAlign.right : TextAlign.left,
+                                ),
                               ))
                           .toList(),
                     ),
@@ -216,12 +225,13 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
                   ],
                   // Biography
                   Text(
-                    isArabic ? 'السيرة الذاتية' : 'Biography',
+                    AppTranslations.getText('biography', locale),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
                     ),
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -233,134 +243,63 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
                           ? Colors.white.withOpacity(0.85)
                           : Colors.black87,
                     ),
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                   ),
                   const SizedBox(height: 32),
                   // Courses Section
                   Text(
-                    isArabic
-                        ? 'الدورات المقدمة من هذا المدرب'
-                        : 'Courses by this Instructor',
+                    AppTranslations.getText('instructor_courses', locale),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
                     ),
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
                   ),
                   const SizedBox(height: 16),
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : errorMessage.isNotEmpty
-                          ? Center(child: Text(errorMessage))
-                          : instructorCourses.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    isArabic
-                                        ? 'لا توجد دورات متاحة لهذا المدرب'
-                                        : 'No courses available from this instructor',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                )
-                              : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: instructorCourses.length,
-                                  itemBuilder: (context, index) {
-                                    final course = instructorCourses[index];
-                                    final locale =
-                                        Localizations.localeOf(context);
-
-                                    return Card(
-                                      margin: const EdgeInsets.only(bottom: 16),
-                                      elevation: 2,
-                                      child: InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  CourseDetails(
-                                                courseId: course.id,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Course thumbnail
-                                            AspectRatio(
-                                              aspectRatio: 16 / 9,
-                                              child: Image.network(
-                                                course.thumbnail,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error,
-                                                    stackTrace) {
-                                                  return Container(
-                                                    color: Colors.grey[300],
-                                                    child: const Center(
-                                                      child: Icon(Icons.error),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(12.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    course.getLocalizedTitle(
-                                                        locale),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.access_time,
-                                                          size: 14,
-                                                          color:
-                                                              Colors.grey[600]),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '${(course.duration / 60).round()} ${isArabic ? "دقيقة" : "minutes"}',
-                                                        style: TextStyle(
-                                                            color: Colors
-                                                                .grey[600],
-                                                            fontSize: 12),
-                                                      ),
-                                                      const SizedBox(width: 16),
-                                                      Icon(Icons.star,
-                                                          size: 14,
-                                                          color: Colors.amber),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '${course.rating.average.toStringAsFixed(1)}',
-                                                        style: TextStyle(
-                                                            color: Colors
-                                                                .grey[600],
-                                                            fontSize: 12),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                  if (isLoading)
+                    Center(
+                      child: Column(
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 8),
+                          Text(
+                            AppTranslations.getText('loading_courses', locale),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (errorMessage.isNotEmpty)
+                    Center(
+                      child: Text(
+                        AppTranslations.getText(
+                              'error_loading_courses',
+                              locale,
+                            ) +
+                            errorMessage,
+                      ),
+                    )
+                  else if (instructorCourses.isEmpty)
+                    Center(
+                      child: Text(
+                        AppTranslations.getText('no_courses', locale),
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: instructorCourses.length,
+                      itemBuilder: (context, index) {
+                        final course = instructorCourses[index];
+                        return _CourseCard(
+                          course: course,
+                          isDark: isDark,
+                          isRtl: isRtl,
+                          locale: locale,
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -386,4 +325,99 @@ class _InstructorDetailsPageState extends State<InstructorDetailsPage> {
   }
 
   void _launchURL(String url) async {}
+}
+
+// Add a separate CourseCard widget for better organization
+class _CourseCard extends StatelessWidget {
+  final Course course;
+  final bool isDark;
+  final bool isRtl;
+  final String locale;
+
+  const _CourseCard({
+    required this.course,
+    required this.isDark,
+    required this.isRtl,
+    required this.locale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: isDark ? Colors.grey[850] : Colors.white,
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourseDetails(courseId: course.id),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.network(
+                course.thumbnail,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.error),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment:
+                    isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    locale == 'ar'
+                        ? (course.title['ar'] ?? '')
+                        : (course.title['en'] ?? ''),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment:
+                        isRtl ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${(course.duration / 60).round()} ${AppTranslations.getText('minutes', locale)}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.star, size: 14, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        course.rating.average.toStringAsFixed(1),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ].reversed.toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../Core/Providers/language_provider.dart';
+import '../../Core/Localization/app_translations.dart';
 
 class CongratulationsPage extends StatelessWidget {
   final VoidCallback? onDownloadCertificate;
@@ -7,9 +10,12 @@ class CongratulationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final languageCode = languageProvider.currentLocale.languageCode;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Congratulations!'),
+        title: Text(AppTranslations.getText('congratulations', languageCode)),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -20,21 +26,23 @@ class CongratulationsPage extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events, color: Colors.amber, size: 100),
               const SizedBox(height: 24),
-              const Text(
-                'Congratulations!',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              Text(
+                AppTranslations.getText('congratulations', languageCode),
+                style:
+                    const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'You have completed the course.\nWell done!',
-                style: TextStyle(fontSize: 18),
+              Text(
+                AppTranslations.getText('course_completed', languageCode),
+                style: const TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 icon: const Icon(Icons.download),
-                label: const Text('Download Certificate'),
+                label: Text(AppTranslations.getText(
+                    'download_certificate', languageCode)),
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -42,10 +50,11 @@ class CongratulationsPage extends StatelessWidget {
                 ),
                 onPressed: onDownloadCertificate ??
                     () {
-                      // TODO: Implement certificate download logic
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Certificate download coming soon!')),
+                        SnackBar(
+                          content: Text(AppTranslations.getText(
+                              'certificate_coming_soon', languageCode)),
+                        ),
                       );
                     },
               ),
@@ -54,7 +63,8 @@ class CongratulationsPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
-                child: const Text('Back to Home'),
+                child:
+                    Text(AppTranslations.getText('back_to_home', languageCode)),
               ),
             ],
           ),

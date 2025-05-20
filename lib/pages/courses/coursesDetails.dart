@@ -188,24 +188,46 @@ class _CourseDetailsState extends State<CourseDetails>
                       slivers: [
                         SliverAppBar(
                           pinned: true,
-                          expandedHeight: 220,
+                          expandedHeight: 300,
                           backgroundColor: isDark
                               ? Colors.grey[900]
                               : Theme.of(context).appBarTheme.backgroundColor,
-                          flexibleSpace: FlexibleSpaceBar(
-                            title: Text(
-                              course!.getLocalizedTitle(locale),
-                              style: TextStyle(
-                                color: isDark ? Colors.white : Colors.black,
+                          flexibleSpace: Stack(
+                            children: [
+                              isVideoInitialized && _chewieController != null
+                                  ? Chewie(controller: _chewieController!)
+                                  : Image.network(
+                                      course!.thumbnail,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.7),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                  child: Text(
+                                    course!.getLocalizedTitle(locale),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            background:
-                                isVideoInitialized && _chewieController != null
-                                    ? Chewie(controller: _chewieController!)
-                                    : Image.network(
-                                        course!.thumbnail,
-                                        fit: BoxFit.cover,
-                                      ),
+                            ],
                           ),
                         ),
                         SliverToBoxAdapter(
