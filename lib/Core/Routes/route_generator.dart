@@ -1,4 +1,5 @@
 import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/pages/profile/account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Guards/auth_guard.dart';
@@ -9,30 +10,35 @@ import '../../pages/Programs/ProgramDetails.dart';
 import '../../pages/instructors/instructor_details.dart';
 import '../../pages/my courses/userCourses.dart';
 import '../../pages/auth/loginPage.dart';
+import '../../pages/subs and payment/subscribe.dart';
 import '../Providers/language_provider.dart';
 
 class RouteGenerator {
-  static const _protectedRoutes = [
+  // Define all routes that require authentication
+  static const List<String> protectedRoutes = [
     '/user_courses',
     '/lessons_viewer',
+    '/account',
+    '/subscribe'
   ];
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments as Map<String, dynamic>?;
-    final requiresAuth = _protectedRoutes.contains(settings.name);
+    final requiresAuth = protectedRoutes.contains(settings.name);
 
-    Widget wrapWithAuthGuardIfNeeded(Widget page) {
+    // Function to wrap pages with AuthGuard when needed
+    Widget buildPageWithAuth(Widget page) {
       return requiresAuth
           ? AuthGuard(
               child: page,
-              requiresAuth: true,
-              targetRoute: settings.name,
+              currentRoute: settings.name ?? '/',
             )
           : page;
     }
 
     switch (settings.name) {
       case '/':
+      case '/home':
         return MaterialPageRoute(builder: (_) => const HomePage());
 
       case '/login':
@@ -40,7 +46,17 @@ class RouteGenerator {
 
       case '/user_courses':
         return MaterialPageRoute(
-          builder: (_) => wrapWithAuthGuardIfNeeded(const UserCourses()),
+          builder: (_) => buildPageWithAuth(const UserCourses()),
+        );
+
+      case '/account':
+        return MaterialPageRoute(
+          builder: (_) => buildPageWithAuth(const AccountPage()),
+        );
+
+      case '/subscribe':
+        return MaterialPageRoute(
+          builder: (_) => buildPageWithAuth(const SubscribePage()),
         );
 
       case '/lessons_viewer':
@@ -52,7 +68,7 @@ class RouteGenerator {
           return _errorRoute();
         }
         return MaterialPageRoute(
-          builder: (_) => wrapWithAuthGuardIfNeeded(
+          builder: (_) => buildPageWithAuth(
             LessonViewerPage(
               course: args['course'],
               modules: args['modules'],

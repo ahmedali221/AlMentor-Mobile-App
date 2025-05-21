@@ -1,10 +1,4 @@
 import 'package:almentor_clone/Core/Routes/route_generator.dart';
-import 'package:almentor_clone/models/payment_model.dart';
-import 'package:almentor_clone/pages/categories/categoryCourses.dart';
-import 'package:almentor_clone/pages/courses/coursesDetails.dart';
-import 'package:almentor_clone/pages/instructors/instructors.dart';
-import 'package:almentor_clone/pages/subs%20and%20payment/craditpayment.dart';
-import 'package:almentor_clone/pages/subs%20and%20payment/subscribe.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,7 +8,6 @@ import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/Core/Themes/lightTheme.dart';
 import 'package:almentor_clone/Core/Themes/darkTheme.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pages/auth/loginPage.dart';
 import 'pages/auth/signUpPage.dart';
@@ -22,6 +15,8 @@ import 'pages/profile/account_page.dart';
 import 'pages/clips_page.dart';
 import 'pages/categories/search_page.dart';
 import 'pages/home/home_page.dart';
+import 'pages/instructors/instructors.dart';
+import 'pages/subs and payment/subscribe.dart';
 import 'services/auth_service.dart';
 
 void main() async {
@@ -63,9 +58,8 @@ class MyApp extends StatelessWidget {
           darkTheme: darkTheme,
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: '/home', // Always start with home page
+          initialRoute: '/home',
           onGenerateRoute: RouteGenerator.generateRoute,
-          navigatorObservers: [RouteObserver()],
           routes: {
             '/login': (context) => LoginPage(),
             '/signup': (context) => SignUpPage(),
@@ -89,39 +83,5 @@ class MyApp extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-class RouteObserver extends NavigatorObserver {
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPush(route, previousRoute);
-    _checkProtectedRoute(route);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (newRoute != null) _checkProtectedRoute(newRoute);
-  }
-
-  void _checkProtectedRoute(Route<dynamic> route) async {
-    final authService =
-        Provider.of<AuthService>(route.navigator!.context, listen: false);
-    final protectedRoutes = [
-      '/user_courses',
-      '/lessons_viewer',
-      '/account',
-      '/subscribe'
-    ];
-
-    if (protectedRoutes.contains(route.settings.name)) {
-      final isLoggedIn = await authService.isLoggedIn();
-      if (!isLoggedIn) {
-        // Save the target route for redirection after login
-        await authService.saveTargetRoute(route.settings.name!);
-        Navigator.of(route.navigator!.context).pushReplacementNamed('/login');
-      }
-    }
   }
 }

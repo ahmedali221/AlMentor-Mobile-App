@@ -4,23 +4,21 @@ import '../../services/auth_service.dart';
 
 class AuthGuard extends StatelessWidget {
   final Widget child;
-  final AuthService _authService = AuthService();
-  final bool requiresAuth;
-  final String? targetRoute;
+  final AuthService authService;
+  final String currentRoute;
 
   AuthGuard({
-    super.key,
+    Key? key,
     required this.child,
-    this.requiresAuth = false,
-    this.targetRoute,
-  });
+    required this.currentRoute,
+    AuthService? authService,
+  })  : authService = authService ?? AuthService(),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (!requiresAuth) return child;
-
     return FutureBuilder<bool>(
-      future: _authService.isLoggedIn(),
+      future: authService.isLoggedIn(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -29,11 +27,11 @@ class AuthGuard extends StatelessWidget {
         }
 
         final isAuthenticated = snapshot.data ?? false;
+
         if (!isAuthenticated) {
+          // Redirect to login page after the widget is built
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (targetRoute != null) {
-              await _authService.saveTargetRoute(targetRoute!);
-            }
+            await authService.saveTargetRoute(currentRoute);
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => LoginPage(
@@ -43,10 +41,13 @@ class AuthGuard extends StatelessWidget {
               ),
             );
           });
+          // Show loading indicator while redirecting
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
+        // User is authenticated, show the protected content
         return child;
       },
     );

@@ -40,12 +40,17 @@ class _AccountPageState extends State<AccountPage> {
           _user = user;
           _isLoading = false;
         });
+      } else {
+        setState(() {
+          _user = null;
+          _isLoading = false;
+        });
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      print('Error loading user data: $e');
+      print('Error loading user data: \$e');
     }
   }
 
@@ -57,8 +62,18 @@ class _AccountPageState extends State<AccountPage> {
         (route) => false,
       );
     } catch (e) {
-      print('Error during logout: $e');
+      print('Error during logout: \$e');
     }
+  }
+
+  Widget _settingsTile(
+      String title, IconData icon, bool isDark, Color onSurface) {
+    return ListTile(
+      leading: Icon(icon, color: onSurface),
+      title: Text(title, style: TextStyle(color: onSurface)),
+      trailing: Icon(Icons.arrow_forward_ios, color: onSurface, size: 16),
+      onTap: () {},
+    );
   }
 
   @override
@@ -78,45 +93,74 @@ class _AccountPageState extends State<AccountPage> {
           // Profile Avatar and User Info
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundColor: surfaceColor.withOpacity(0.2),
-                      backgroundImage: _user?.profilePicture != null &&
-                              _user!.profilePicture.isNotEmpty
-                          ? NetworkImage(_user!.profilePicture)
-                          : null,
-                      child: _user?.profilePicture == null ||
-                              _user!.profilePicture.isEmpty
-                          ? Icon(Icons.person,
-                              size: 64,
-                              color: isDark
-                                  ? surfaceColor.withOpacity(0.5)
-                                  : Colors.grey[400])
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    if (_user != null) ...[
-                      Text(
-                        '${_user!.firstNameEn} ${_user!.lastNameEn}',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+              : (_user != null
+                  ? Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: surfaceColor.withOpacity(0.2),
+                          backgroundImage: _user?.profilePicture != null &&
+                                  _user!.profilePicture.isNotEmpty
+                              ? NetworkImage(_user!.profilePicture)
+                              : null,
+                          child: _user?.profilePicture == null ||
+                                  _user!.profilePicture.isEmpty
+                              ? Icon(Icons.person,
+                                  size: 64,
+                                  color: isDark
+                                      ? surfaceColor.withOpacity(0.5)
+                                      : Colors.grey[400])
+                              : null,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _user!.email,
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.black54,
-                          fontSize: 16,
+                        const SizedBox(height: 12),
+                        Text(
+                          '\${_user!.firstNameEn} \${_user!.lastNameEn}',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                    ],
-                  ],
-                ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _user!.email,
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Icon(Icons.person_off,
+                            size: 64,
+                            color: isDark
+                                ? surfaceColor.withOpacity(0.5)
+                                : Colors.grey[400]),
+                        const SizedBox(height: 12),
+                        Text(
+                          AppTranslations.getText('not_logged_in',
+                              languageProvider.currentLocale.languageCode),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppTranslations.getText(
+                              'please_login_to_view_profile',
+                              languageProvider.currentLocale.languageCode),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )),
           const SizedBox(height: 18),
           // Red Card
           Container(
@@ -335,43 +379,8 @@ class _AccountPageState extends State<AccountPage> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          // Version
-          Center(
-            child: Text(
-              '${AppTranslations.getText('version', languageProvider.currentLocale.languageCode)} 1.1.40',
-              style: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black38,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
         ],
       ),
-    );
-  }
-
-  // Helper for settings tiles
-  Widget _settingsTile(
-      String title, IconData icon, bool isDark, Color onSurface) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading:
-          Icon(icon, color: isDark ? Colors.white : Colors.black87, size: 22),
-      trailing: Icon(Icons.arrow_forward_ios,
-          color: isDark ? Colors.white : Colors.black54, size: 18),
-      title: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(
-            color: onSurface,
-            fontSize: 16,
-          ),
-        ),
-      ),
-      onTap: () {},
     );
   }
 }

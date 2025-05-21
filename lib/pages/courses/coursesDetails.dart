@@ -1,4 +1,3 @@
-import 'package:almentor_clone/Core/Guards/auth_guard.dart';
 import 'package:almentor_clone/models/module.dart';
 import 'package:almentor_clone/pages/courses/lessonsViewr.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import '../../models/lesson.dart';
 import '../../services/course_service.dart';
 import '../../services/module_service.dart';
 import '../../services/lesson_service.dart';
+import '../../services/auth_service.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +27,7 @@ class _CourseDetailsState extends State<CourseDetails>
   final CourseService _courseService = CourseService();
   final ModuleService _moduleService = ModuleService();
   final LessonService _lessonService = LessonService();
+  final AuthService _authService = AuthService();
 
   late TabController _tabController;
   Course? course;
@@ -43,24 +44,38 @@ class _CourseDetailsState extends State<CourseDetails>
   bool isVideoInitialized = false;
   String? currentVideoUrl;
 
-  void _onLessonTap(int index) {
+  void _onLessonTap(int index) async {
     final lesson = lessons[index];
     final hasVideo = lesson.content.videoUrl.isNotEmpty;
 
     if (hasVideo) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AuthGuard(
-            child: LessonViewerPage(
-              course: course!,
-              modules: modules,
-              lessons: lessons,
-              initialIndex: index,
-            ),
-          ),
-        ),
-      );
+      // First check if user is logged in
+      final isLoggedIn = await _authService.isLoggedIn();
+
+      if (isLoggedIn) {
+        // User is logged in, navigate to the lesson viewer
+        Navigator.of(context).pushNamed(
+          '/lessons_viewer',
+          arguments: {
+            'course': course,
+            'modules': modules,
+            'lessons': lessons,
+            'initialIndex': index,
+          },
+        );
+      } else {
+        // User is not logged in, save the target route and redirect to login
+        final targetRoute = '/lessons_viewer';
+        await _authService.saveTargetRoute(targetRoute);
+
+        Navigator.of(context).pushReplacementNamed(
+          '/login',
+          arguments: {
+            'showAlert': true,
+            'alertMessage': 'Please login to view lessons',
+          },
+        );
+      }
     }
   }
 
