@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import '../../Core/Localization/app_translations.dart';
+import '../../Core/Guards/subscription_guard.dart';
 import '../../models/course.dart';
 import '../../models/module.dart';
 import '../../models/lesson.dart';
@@ -37,7 +38,7 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
   void initState() {
     super.initState();
     currentIndex = widget.initialIndex;
-    _loadVideo();
+    _checkSubscriptionAndLoadVideo();
   }
 
   @override
@@ -48,6 +49,46 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
     _chewieController = null;
     _videoPlayerController = null;
     super.dispose();
+  }
+
+  Future<void> _checkSubscriptionAndLoadVideo() async {
+    final subscriptionGuard = SubscriptionGuard();
+    final canAccess = await subscriptionGuard.canAccessPremiumContent();
+
+    if (!canAccess) {
+      if (mounted) {
+        // Show subscription required dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Subscription Required'),
+            content: const Text(
+              'You need an active subscription to access this content. Would you like to subscribe now?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Return to course details
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushReplacementNamed('/subscribe');
+                },
+                child: const Text('Subscribe'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    _loadVideo();
   }
 
   Future<void> _loadVideo() async {
@@ -80,7 +121,7 @@ class _LessonViewerPageState extends State<LessonViewerPage> {
     setState(() {
       currentIndex = newIndex;
     });
-    _loadVideo();
+    _checkSubscriptionAndLoadVideo();
   }
 
   void _onNextPressed() {

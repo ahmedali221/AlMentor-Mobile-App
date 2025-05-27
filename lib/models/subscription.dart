@@ -25,19 +25,27 @@ class Subscription {
 
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
-      id: json['_id'] ?? json['id'],
-      name: json['name'],
-      displayNameAr: json['displayName']?['ar'] ?? json['displayNameAr'],
-      descriptionAr: json['description']?['ar'] ?? json['descriptionAr'],
-      amount: (json['price']?['amount'] ?? json['amount'] as num).toDouble(),
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
+      name: json['name']?.toString() ?? '',
+      displayNameAr: json['displayName']?['ar']?.toString() ??
+          json['displayNameAr']?.toString() ??
+          '',
+      descriptionAr: json['description']?['ar']?.toString() ??
+          json['descriptionAr']?.toString() ??
+          '',
+      amount: (json['price']?['amount'] ?? json['amount'] ?? 0).toDouble(),
       originalAmount: json['price']?['originalAmount'] != null
           ? (json['price']?['originalAmount'] as num).toDouble()
           : json['originalAmount'] != null
               ? (json['originalAmount'] as num).toDouble()
               : null,
-      currency: json['price']?['currency'] ?? json['currency'],
-      durationValue: json['duration']?['value'] ?? json['durationValue'],
-      durationUnit: json['duration']?['unit'] ?? json['durationUnit'],
+      currency: json['price']?['currency']?.toString() ??
+          json['currency']?.toString() ??
+          '',
+      durationValue: json['duration']?['value'] ?? json['durationValue'] ?? 1,
+      durationUnit: json['duration']?['unit']?.toString() ??
+          json['durationUnit']?.toString() ??
+          '',
       features: (json['features'] as List<dynamic>? ?? [])
           .map((f) => Feature.fromJson(f))
           .toList(),
@@ -73,9 +81,12 @@ class Feature {
 
   factory Feature.fromJson(Map<String, dynamic> json) {
     return Feature(
-      titleAr: json['title']?['ar'] ?? json['titleAr'],
-      descriptionAr: json['description']?['ar'] ?? json['descriptionAr'],
-      icon: json['icon'],
+      titleAr:
+          json['title']?['ar']?.toString() ?? json['titleAr']?.toString() ?? '',
+      descriptionAr: json['description']?['ar']?.toString() ??
+          json['descriptionAr']?.toString() ??
+          '',
+      icon: json['icon']?.toString(),
     );
   }
 
@@ -86,4 +97,4 @@ class Feature {
       'icon': icon,
     };
   }
-} 
+}

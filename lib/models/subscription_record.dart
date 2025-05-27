@@ -23,12 +23,16 @@ class SubscriptionRecord {
     return SubscriptionRecord(
       id: json['_id']?['\$oid'] ?? json['id'] ?? '',
       userId: json['userId']?['\$oid'] ?? json['userId'] ?? '',
-      subscriptionId: json['subscriptionId']?['\$oid'] ?? json['subscriptionId'] ?? '',
-      startDate: DateTime.parse(json['startDate']?['\$date'] ?? json['startDate']),
+      subscriptionId:
+          json['subscriptionId']?['\$oid'] ?? json['subscriptionId'] ?? '',
+      startDate:
+          DateTime.parse(json['startDate']?['\$date'] ?? json['startDate']),
       endDate: DateTime.parse(json['endDate']?['\$date'] ?? json['endDate']),
       status: json['status'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']?['\$date'] ?? json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']?['\$date'] ?? json['updatedAt']),
+      createdAt:
+          DateTime.parse(json['createdAt']?['\$date'] ?? json['createdAt']),
+      updatedAt:
+          DateTime.parse(json['updatedAt']?['\$date'] ?? json['updatedAt']),
     );
   }
 
@@ -44,4 +48,4 @@ class SubscriptionRecord {
       'updatedAt': {'\$date': updatedAt.toIso8601String()},
     };
   }
-} 
+}

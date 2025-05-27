@@ -11,6 +11,7 @@ import '../../services/course_service.dart';
 import '../../services/module_service.dart';
 import '../../services/lesson_service.dart';
 import '../../services/auth_service.dart';
+import '../../Core/Guards/subscription_guard.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:provider/provider.dart';
@@ -781,36 +782,56 @@ class _CourseDetailsState extends State<CourseDetails>
                     final lessonGlobalIndex = lessons.indexWhere((l) =>
                         l.id == lesson.id && l.moduleId == lesson.moduleId);
 
-                    return ListTile(
-                      leading: Icon(
-                        hasVideo ? Icons.play_circle : Icons.article,
-                        color: hasVideo
-                            ? Theme.of(context).colorScheme.primary
-                            : (isDark ? Colors.white : Colors.black54),
-                      ),
-                      title: Text(
-                        lesson.getLocalizedTitle(locale),
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '${lesson.duration} min',
-                        style: TextStyle(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                      trailing: hasVideo
-                          ? Icon(
-                              Icons.play_circle_outline,
-                              color: Theme.of(context).colorScheme.primary,
-                            )
-                          : null,
-                      onTap: () => _onLessonTap(lessonGlobalIndex),
-                    );
+                    return _buildLessonTile(
+                        lesson, lessonGlobalIndex, hasVideo, locale, isDark);
                   }).toList(),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLessonTile(
+      Lesson lesson, int index, bool hasVideo, Locale locale, bool isDark) {
+    return FutureBuilder<bool>(
+      future: SubscriptionGuard().canAccessPremiumContent(),
+      builder: (context, snapshot) {
+        final bool hasSubscription = snapshot.data ?? false;
+        final bool isLocked = hasVideo && !hasSubscription;
+
+        return ListTile(
+          leading: Icon(
+            hasVideo
+                ? (isLocked ? Icons.lock : Icons.play_circle)
+                : Icons.article,
+            color: hasVideo
+                ? (isLocked
+                    ? Colors.grey
+                    : Theme.of(context).colorScheme.primary)
+                : (isDark ? Colors.white : Colors.black54),
+          ),
+          title: Text(
+            lesson.getLocalizedTitle(locale),
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          subtitle: Text(
+            '${lesson.duration} min${isLocked ? ' · Subscription required' : ''}',
+            style: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          trailing: hasVideo
+              ? Icon(
+                  isLocked ? Icons.lock_outline : Icons.play_circle_outline,
+                  color: isLocked
+                      ? Colors.grey
+                      : Theme.of(context).colorScheme.primary,
+                )
+              : null,
+          onTap: () => _onLessonTap(index),
         );
       },
     );
@@ -1037,53 +1058,31 @@ class _CourseDetailsState extends State<CourseDetails>
     final hasVideo = lesson.content.videoUrl.isNotEmpty;
 
     if (hasVideo) {
-      // First check if user is logged in
-      final isLoggedIn = await _authService.isLoggedIn();
+      // Use the subscription guard to check access
+      final subscriptionGuard = SubscriptionGuard();
+      final canAccess = await subscriptionGuard.handleSubscriptionCheck(
+        context,
+        redirectRoute: '/course_details/${widget.courseId}',
+      );
 
-      if (isLoggedIn) {
+      if (canAccess) {
         // Auto-save the course when opening a lesson
         if (mounted) {
-          _startAndSaveCourse();
-        }
-
-        // User is logged in, navigate to the lesson viewer
-        if (mounted) {
-          Navigator.of(context).pushNamed(
-            '/lessons_viewer',
-            arguments: {
-              'course': course,
-              'modules': modules,
-              'lessons': lessons,
-              'initialIndex': index,
-            },
-          );
-        }
-      } else {
-        // User is not logged in, save the target route and redirect to login
-        if (mounted) {
-          await _authService
-              .saveTargetRoute('/course_details/${widget.courseId}');
-          Navigator.pushNamed(context, '/login');
+          _startAndSaveCourse(index);
         }
       }
     }
   }
 
-  Future<void> _startAndSaveCourse() async {
-    final isLoggedIn = await _authService.isLoggedIn();
+  Future<void> _startAndSaveCourse([int initialIndex = 0]) async {
+    // Use the subscription guard to check access
+    final subscriptionGuard = SubscriptionGuard();
+    final canAccess = await subscriptionGuard.handleSubscriptionCheck(
+      context,
+      redirectRoute: '/course_details/${widget.courseId}',
+    );
 
-    if (!isLoggedIn) {
-      // Save the current route and navigate to login
-      await _authService.saveTargetRoute('/course_details/${widget.courseId}');
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(
-          '/login',
-          arguments: {
-            'showAlert': true,
-            'alertMessage': 'Please login to start this course',
-          },
-        );
-      }
+    if (!canAccess) {
       return;
     }
 
@@ -1110,7 +1109,7 @@ class _CourseDetailsState extends State<CourseDetails>
         }
       }
 
-      // Navigate to the first lesson if available
+      // Navigate to the lesson if available
       if (lessons.isNotEmpty) {
         if (mounted) {
           Navigator.of(context).pushNamed(
@@ -1119,7 +1118,7 @@ class _CourseDetailsState extends State<CourseDetails>
               'course': course,
               'modules': modules,
               'lessons': lessons,
-              'initialIndex': 0,
+              'initialIndex': initialIndex,
             },
           );
         }
@@ -1154,7 +1153,7 @@ class _CourseDetailsState extends State<CourseDetails>
 
   Color _getBackgroundColor() {
     return Theme.of(context).brightness == Brightness.dark
-        ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.8)
-        : Theme.of(context).colorScheme.surface.withValues(alpha: 0.9);
+        ? Theme.of(context).colorScheme.surface.withOpacity(0.8)
+        : Theme.of(context).colorScheme.surface.withOpacity(0.9);
   }
 }

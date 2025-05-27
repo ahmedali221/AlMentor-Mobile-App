@@ -1,4 +1,5 @@
 import 'package:almentor_clone/Core/Localization/app_translations.dart';
+import 'package:almentor_clone/pages/ai-chat/ai_mentor_page.dart';
 import 'package:almentor_clone/pages/profile/account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import '../../pages/instructors/instructor_details.dart';
 import '../../pages/my courses/userCourses.dart';
 import '../../pages/auth/loginPage.dart';
 import '../../pages/subs and payment/subscribe.dart';
+import '../../pages/subs and payment/craditpayment.dart';
 import '../Providers/language_provider.dart';
 
 class RouteGenerator {
@@ -19,7 +21,8 @@ class RouteGenerator {
     '/user_courses',
     '/lessons_viewer',
     '/account',
-    '/subscribe'
+    '/subscribe',
+    '/ai_mentor', // <-- Add this line
   ];
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -107,6 +110,19 @@ class RouteGenerator {
               isRtl: languageProvider.isArabic,
             );
           },
+        );
+
+      case '/credit_card_payment':
+        if (args == null) {
+          return _errorRoute();
+        }
+        return MaterialPageRoute(
+          builder: (_) => CraditPayment(payment: args['payment']),
+        );
+
+      case '/ai_mentor':
+        return MaterialPageRoute(
+          builder: (_) => buildPageWithAuth(const AiMentorPage()),
         );
 
       default:

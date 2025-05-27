@@ -1,13 +1,14 @@
-import 'package:almentor_clone/Core/Localization/app_translations.dart';
-import 'package:almentor_clone/Core/Providers/themeProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:almentor_clone/models/payment_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../../Core/Providers/themeProvider.dart';
+import '../../Core/Providers/language_provider.dart';
+import '../../Core/Localization/app_translations.dart';
 
 class CraditPayment extends StatefulWidget {
   final PaymentModel payment;
@@ -143,91 +144,127 @@ class _CraditPaymentState extends State<CraditPayment> {
     }
   }
 
-  // Update build method
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final locale = Localizations.localeOf(context).languageCode;
+    final locale = languageProvider.currentLocale.languageCode;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+        backgroundColor: isDark ? Colors.black : Colors.white,
         elevation: 0,
-        title: Text(
-          AppTranslations.getText('payment_methods', locale),
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black,
-          ),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        title: Text(
+          AppTranslations.getText('payment_methods', locale) ?? 'طرق الدفع',
+          style: TextStyle(
+              color: isDark ? Colors.white : Colors.black,
+              fontWeight: FontWeight.bold),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Payment options with almentor.net styling
-            // ... existing payment options code with updated colors
-
-            // Continue button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: _handlePayment,
-                child: Text(
-                  AppTranslations.getText('continue', locale),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(isDark, locale),
+                    const SizedBox(height: 10),
+                    _buildSummaryCard(isDark),
+                    const SizedBox(height: 16),
+                    _buildSubscriptionTitleRow(isDark),
+                    const SizedBox(height: 10),
+                    _buildPromoToggle(isDark, locale),
+                    if (_showPromoCode) _buildPromoField(isDark, locale),
+                    const SizedBox(height: 20),
+                    _buildTotalDue(isDark, locale),
+                    const SizedBox(height: 10),
+                    _buildStatusAndDate(isDark, locale),
+                    const SizedBox(height: 20),
+                    _buildPaymentOption(
+                      index: 0,
+                      title: AppTranslations.getText('pay_with_card', locale) ??
+                          'Pay with Card',
+                      leading: _paymentIcon('assets/images/download.png'),
+                      isDark: isDark,
+                    ),
+                    _buildPaymentOption(
+                      index: 1,
+                      title:
+                          AppTranslations.getText('pay_with_fawry', locale) ??
+                              'Pay with Fawry',
+                      leading: _paymentIcon('assets/images/download.jpg'),
+                      isDark: isDark,
+                    ),
+                    if (_selectedPaymentOption == 1)
+                      _buildPhoneField(
+                          isDark,
+                          AppTranslations.getText('pay_using_fawry', locale) ??
+                              'Pay using any Fawry outlet.'),
+                    _buildPaymentOption(
+                      index: 2,
+                      title: AppTranslations.getText(
+                              'pay_with_vodafone', locale) ??
+                          'Pay with Vodafone Cash',
+                      leading: _paymentIcon('assets/images/vodafone-cash.png'),
+                      isDark: isDark,
+                    ),
+                    if (_selectedPaymentOption == 2)
+                      _buildPhoneField(
+                          isDark,
+                          AppTranslations.getText(
+                                  'pay_using_vodafone', locale) ??
+                              'Pay using Vodafone Cash.'),
+                    const SizedBox(height: 30),
+                    _buildContinueButton(isDark, locale),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSectionHeader() {
+  Widget _buildSectionHeader(bool isDark, String locale) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'Order Summary:',
+        Text(
+          AppTranslations.getText('order_summary', locale) ?? 'Order Summary:',
           style: TextStyle(
-            color: Colors.white,
+            color: isDark ? Colors.white : Colors.black,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
         TextButton(
           onPressed: () {},
-          child: const Text(
-            'Show More',
-            style: TextStyle(color: Colors.white),
+          child: Text(
+            AppTranslations.getText('show_more', locale) ?? 'Show More',
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
           ),
         )
       ],
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: isDark ? Colors.grey[900] : Colors.grey[200],
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -235,15 +272,21 @@ class _CraditPaymentState extends State<CraditPayment> {
         children: [
           Text(
             widget.payment.subscriptionTitle,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(
+                color: isDark ? Colors.white : Colors.black, fontSize: 16),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text(
-              'Change Plan',
-              style: TextStyle(color: Colors.blueAccent),
+            child: Text(
+              AppTranslations.getText(
+                      'change_plan',
+                      Provider.of<LanguageProvider>(context, listen: false)
+                          .currentLocale
+                          .languageCode) ??
+                  'Change Plan',
+              style: const TextStyle(color: Colors.blueAccent),
             ),
           ),
         ],
@@ -251,36 +294,39 @@ class _CraditPaymentState extends State<CraditPayment> {
     );
   }
 
-  Widget _buildSubscriptionTitleRow() {
+  Widget _buildSubscriptionTitleRow(bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(widget.payment.subscriptionTitle,
-            style: const TextStyle(fontSize: 20, color: Colors.white)),
+            style: TextStyle(
+                fontSize: 20, color: isDark ? Colors.white : Colors.black)),
         Text(
           '${widget.payment.amount} ${widget.payment.currency}',
-          style: const TextStyle(fontSize: 20, color: Colors.white),
+          style: TextStyle(
+              fontSize: 20, color: isDark ? Colors.white : Colors.black),
         ),
       ],
     );
   }
 
-  Widget _buildPromoToggle() {
+  Widget _buildPromoToggle(bool isDark, String locale) {
     return GestureDetector(
       onTap: () {
         setState(() {
           _showPromoCode = !_showPromoCode;
         });
       },
-      child: const Text(
-        'Use Promo Code',
+      child: Text(
+        AppTranslations.getText('use_promo_code', locale) ?? 'Use Promo Code',
         style: TextStyle(
-            color: Colors.white, decoration: TextDecoration.underline),
+            color: isDark ? Colors.white : Colors.black,
+            decoration: TextDecoration.underline),
       ),
     );
   }
 
-  Widget _buildPromoField() {
+  Widget _buildPromoField(bool isDark, String locale) {
     return Padding(
       padding: const EdgeInsets.only(top: 10.0),
       child: Row(
@@ -289,15 +335,17 @@ class _CraditPaymentState extends State<CraditPayment> {
             child: TextField(
               controller: _promoController,
               decoration: InputDecoration(
-                hintText: 'Enter Code',
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintText: AppTranslations.getText('enter_code', locale) ??
+                    'Enter Code',
+                hintStyle:
+                    TextStyle(color: isDark ? Colors.white54 : Colors.black54),
                 filled: true,
-                fillColor: Colors.grey[850],
+                fillColor: isDark ? Colors.grey[850] : Colors.grey[200],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
             ),
           ),
           const SizedBox(width: 10),
@@ -305,8 +353,8 @@ class _CraditPaymentState extends State<CraditPayment> {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text('Promo Code "${_promoController.text}" applied.'),
+                  content: Text(
+                      '${AppTranslations.getText('promo_code_applied', locale) ?? 'Promo Code applied.'} "${_promoController.text}"'),
                 ),
               );
             },
@@ -314,41 +362,45 @@ class _CraditPaymentState extends State<CraditPayment> {
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            child: const Text('Apply'),
+            child: Text(AppTranslations.getText('apply', locale) ?? 'Apply'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTotalDue() {
+  Widget _buildTotalDue(bool isDark, String locale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Total Due',
-          style: TextStyle(fontSize: 16, color: Colors.white70),
+        Text(
+          AppTranslations.getText('total_due', locale) ?? 'Total Due',
+          style: TextStyle(
+              fontSize: 16, color: isDark ? Colors.white70 : Colors.black54),
         ),
         Text(
           '${widget.payment.amount} ${widget.payment.currency}',
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+          style: TextStyle(
+              fontSize: 18, color: isDark ? Colors.white : Colors.black),
         ),
       ],
     );
   }
 
-  Widget _buildStatusAndDate() {
+  Widget _buildStatusAndDate(bool isDark, String locale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Payment Status: ${widget.payment.statusAr}',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          '${AppTranslations.getText('payment_status', locale) ?? 'Payment Status'}: ${widget.payment.statusAr}',
+          style: TextStyle(
+              fontSize: 12, color: isDark ? Colors.grey : Colors.black54),
         ),
         const SizedBox(height: 5),
         Text(
-          'Created At: ${DateFormat.yMMMd().format(widget.payment.createdAt)}',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          '${AppTranslations.getText('created_at', locale) ?? 'Created At'}: ${DateFormat.yMMMd().format(widget.payment.createdAt)}',
+          style: TextStyle(
+              fontSize: 12, color: isDark ? Colors.grey : Colors.black54),
         ),
       ],
     );
@@ -358,11 +410,12 @@ class _CraditPaymentState extends State<CraditPayment> {
     required int index,
     required String title,
     required Widget leading,
+    required bool isDark,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: isDark ? Colors.grey[900] : Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color:
@@ -373,7 +426,8 @@ class _CraditPaymentState extends State<CraditPayment> {
       child: ListTile(
         leading: leading,
         title: Text(title,
-            style: const TextStyle(fontSize: 16, color: Colors.white)),
+            style: TextStyle(
+                fontSize: 16, color: isDark ? Colors.white : Colors.black)),
         trailing: Radio<int>(
           value: index,
           groupValue: _selectedPaymentOption,
@@ -403,31 +457,41 @@ class _CraditPaymentState extends State<CraditPayment> {
     );
   }
 
-  Widget _buildPhoneField(String infoText) {
+  Widget _buildPhoneField(bool isDark, String infoText) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(infoText,
-              style: const TextStyle(fontSize: 14, color: Colors.white70)),
+              style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : Colors.black54)),
           const SizedBox(height: 10),
-          const Text(
-            'Phone Number',
+          Text(
+            AppTranslations.getText(
+                    'phone_number',
+                    Provider.of<LanguageProvider>(context, listen: false)
+                        .currentLocale
+                        .languageCode) ??
+                'Phone Number',
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black),
           ),
           const SizedBox(height: 5),
           TextField(
             controller: _phoneController,
             decoration: InputDecoration(
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               hintText: '01XX-XXXX-XXXX',
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintStyle:
+                  TextStyle(color: isDark ? Colors.white54 : Colors.black54),
               filled: true,
-              fillColor: Colors.grey[850],
+              fillColor: isDark ? Colors.grey[850] : Colors.grey[200],
             ),
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
             keyboardType: TextInputType.phone,
           ),
         ],
@@ -435,7 +499,7 @@ class _CraditPaymentState extends State<CraditPayment> {
     );
   }
 
-  Widget _buildContinueButton() {
+  Widget _buildContinueButton(bool isDark, String locale) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -447,9 +511,10 @@ class _CraditPaymentState extends State<CraditPayment> {
           ),
         ),
         onPressed: _selectedPaymentOption == -1 ? null : _handlePayment,
-        child: const Text(
-          'Continue to Payment',
-          style: TextStyle(fontSize: 18, color: Colors.white),
+        child: Text(
+          AppTranslations.getText('continue_to_payment', locale) ??
+              'Continue to Payment',
+          style: const TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
     );
