@@ -12,7 +12,7 @@ import '../courses/coursesDetails.dart';
 class ProgramDetails extends StatefulWidget {
   final String programId;
 
-  const ProgramDetails({Key? key, required this.programId}) : super(key: key);
+  const ProgramDetails({super.key, required this.programId});
 
   @override
   State<ProgramDetails> createState() => _ProgramDetailsState();
@@ -60,13 +60,9 @@ class _ProgramDetailsState extends State<ProgramDetails> {
           try {
             print('Fetching instructor with ID: $id');
             final instructor = await instructorService.getInstructorById(id);
-            if (instructor != null) {
-              print('Fetched instructor: ${instructor.user.firstNameEn}');
-              fetchedInstructors.add(instructor);
-            } else {
-              print('Instructor not found for ID: $id');
-            }
-          } catch (e) {
+            print('Fetched instructor: ${instructor.user.firstNameEn}');
+            fetchedInstructors.add(instructor);
+                    } catch (e) {
             print('Error fetching instructor with ID $id: $e');
           }
         }

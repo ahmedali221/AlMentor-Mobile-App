@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Core/Providers/themeProvider.dart';
@@ -8,6 +6,9 @@ import '../../Core/Localization/app_translations.dart';
 import '../../services/auth_service.dart';
 import '../../models/user.dart';
 import '../auth/loginPage.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('AccountPage');
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -20,6 +21,7 @@ class _AccountPageState extends State<AccountPage> {
   final AuthService _authService = AuthService();
   User? _user;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,73 +30,111 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _loadUserData() async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
+      _logger.info('Loading user data');
       final token = await _authService.getToken();
       if (token != null) {
         final user = await _authService.getCurrentUser();
+        if (mounted) {
         setState(() {
           _user = user;
           _isLoading = false;
         });
+        }
       } else {
+        if (mounted) {
         setState(() {
           _user = null;
           _isLoading = false;
         });
+        }
       }
     } catch (e) {
+      _logger.severe('Error loading user data: $e');
+      if (mounted) {
       setState(() {
+          _errorMessage = e.toString();
         _isLoading = false;
       });
-      print('Error loading user data: \$e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profile: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
   Future<void> _logout() async {
     try {
+      _logger.info('Logging out user');
       await _authService.logout();
+      if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false,
       );
+      }
     } catch (e) {
-      print('Error during logout: \$e');
+      _logger.severe('Error during logout: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error during logout: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+    );
+  }
     }
   }
 
-  Widget _settingsTile(
-      String title, IconData icon, bool isDark, Color onSurface) {
-    return ListTile(
-      leading: Icon(icon, color: onSurface),
-      title: Text(title, style: TextStyle(color: onSurface)),
-      trailing: Icon(Icons.arrow_forward_ios, color: onSurface, size: 16),
-      onTap: () {},
-    );
-  }
+  Widget _buildProfileSection(bool isDark, Color surfaceColor) {
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-    final surfaceColor = Theme.of(context).colorScheme.surface;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 12),
-          // Profile Avatar and User Info
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : (_user != null
-                  ? Column(
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadUserData,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
                       children: [
                         CircleAvatar(
                           radius: 48,
@@ -113,8 +153,9 @@ class _AccountPageState extends State<AccountPage> {
                               : null,
                         ),
                         const SizedBox(height: 12),
+        if (_user != null) ...[
                         Text(
-                          '\${_user!.firstNameEn} \${_user!.lastNameEn}',
+            '${_user!.firstNameEn} ${_user!.lastNameEn}',
                           style: TextStyle(
                             color: isDark ? Colors.white : Colors.black,
                             fontWeight: FontWeight.bold,
@@ -129,10 +170,7 @@ class _AccountPageState extends State<AccountPage> {
                             fontSize: 16,
                           ),
                         ),
-                      ],
-                    )
-                  : Column(
-                      children: [
+        ] else ...[
                         Icon(Icons.person_off,
                             size: 64,
                             color: isDark
@@ -141,7 +179,7 @@ class _AccountPageState extends State<AccountPage> {
                         const SizedBox(height: 12),
                         Text(
                           AppTranslations.getText('not_logged_in',
-                              languageProvider.currentLocale.languageCode),
+                Localizations.localeOf(context).languageCode),
                           style: TextStyle(
                             color: isDark ? Colors.white : Colors.black,
                             fontWeight: FontWeight.bold,
@@ -152,7 +190,7 @@ class _AccountPageState extends State<AccountPage> {
                         Text(
                           AppTranslations.getText(
                               'please_login_to_view_profile',
-                              languageProvider.currentLocale.languageCode),
+                Localizations.localeOf(context).languageCode),
                           style: TextStyle(
                             color: isDark ? Colors.white70 : Colors.black54,
                             fontSize: 16,
@@ -160,7 +198,47 @@ class _AccountPageState extends State<AccountPage> {
                           textAlign: TextAlign.center,
                         ),
                       ],
-                    )),
+      ],
+    );
+  }
+
+  Widget _settingsTile(
+      String title, IconData icon, bool isDark, Color onSurface) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading:
+          Icon(icon, color: isDark ? Colors.white : Colors.black87, size: 22),
+      trailing: Icon(Icons.arrow_forward_ios,
+          color: isDark ? Colors.white : Colors.black54, size: 18),
+      title: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: TextStyle(
+            color: onSurface,
+            fontSize: 16,
+          ),
+        ),
+      ),
+      onTap: () {},
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          const SizedBox(height: 12),
+          _buildProfileSection(isDark, surfaceColor),
           const SizedBox(height: 18),
           // Red Card
           Container(
@@ -171,7 +249,6 @@ class _AccountPageState extends State<AccountPage> {
             padding: const EdgeInsets.all(18),
             child: Row(
               children: [
-                // Illustration (replace with your asset if you have one)
                 Container(
                   width: 60,
                   height: 100,
@@ -190,7 +267,6 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Texts and Button
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,8 +274,8 @@ class _AccountPageState extends State<AccountPage> {
                       Text(
                         AppTranslations.getText('invest_in_yourself',
                             languageProvider.currentLocale.languageCode),
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.white,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -209,8 +285,8 @@ class _AccountPageState extends State<AccountPage> {
                       Text(
                         AppTranslations.getText('enjoy_courses',
                             languageProvider.currentLocale.languageCode),
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.white,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
                         ),
                         textAlign: TextAlign.left,
@@ -379,6 +455,18 @@ class _AccountPageState extends State<AccountPage> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          // Version
+          Center(
+            child: Text(
+              '${AppTranslations.getText('version', languageProvider.currentLocale.languageCode)} 1.1.40',
+              style: TextStyle(
+                color: isDark ? Colors.white54 : Colors.black38,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );

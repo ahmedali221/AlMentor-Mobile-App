@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:path/path.dart' as path;
 
 class AiChatMessage {
   final String id;
@@ -118,8 +117,8 @@ class AiChatService {
     final headers = {
       'Authorization': 'Bearer $_apiKey',
       'Content-Type': 'application/json',
-      if (_siteUrl != null) 'HTTP-Referer': _siteUrl!,
-      if (_siteName != null) 'X-Title': _siteName!,
+      if (_siteUrl != null) 'HTTP-Referer': _siteUrl,
+      if (_siteName != null) 'X-Title': _siteName,
     };
 
     final body = jsonEncode({

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class AiMentorPage extends StatefulWidget {
@@ -213,7 +212,7 @@ class _AiMentorPageState extends State<AiMentorPage> {
                           'How can I help you today?',
                           style: TextStyle(
                             fontSize: 18,
-                            color: colors.onBackground,
+                            color: colors.onSurface,
                           ),
                         ),
                       ],
@@ -261,7 +260,7 @@ class _AiMentorPageState extends State<AiMentorPage> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: colors.surfaceVariant.withOpacity(0.4),
+                          fillColor: colors.surfaceContainerHighest.withOpacity(0.4),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,

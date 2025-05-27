@@ -1,5 +1,4 @@
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
-import 'package:almentor_clone/pages/instructors/instructor_details.dart';
 import 'package:almentor_clone/pages/Programs/ProgramDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

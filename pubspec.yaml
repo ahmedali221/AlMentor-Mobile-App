@@ -50,6 +50,7 @@ dependencies:
   video_player: ^2.9.5
   chewie: ^1.11.3
   url_launcher: ^6.3.1
+  logging: ^1.2.0
   flutter_localizations:
     sdk: flutter
 
@@ -76,35 +77,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/teacher1.png
-    - assets/images/teacher2.png
-    - assets/images/teacher3.png
-    - assets/images/teacher4.png
-    - assets/images/teacher5.png
-    - assets/images/num1.png
-    - assets/images/num2.png
-    - assets/images/num3.png
-    - assets/images/num4.png
-    - assets/images/num5.png
-    - assets/images/num6.png
-    - assets/images/num7.png
-    - assets/images/prog1.png
-    - assets/images/prog2.png
-    - assets/images/prog3.png
-    - assets/images/co1.png
-    - assets/images/co2.png
-    - assets/images/co3.png
-    - assets/images/f1.png
-    - assets/images/f2.png
-    - assets/images/f3.png
-    - assets/images/join.png
-    - assets/images/jo.png
-    - assets/images/ahly.png
-    - assets/images/cib.png
-    - assets/images/download.jpg
-    - assets/images/download.png
-    - assets/images/vodafone-cash.png
-    - assets/images/logo.jpeg
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

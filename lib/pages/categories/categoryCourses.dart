@@ -2,9 +2,7 @@ import 'package:almentor_clone/pages/courses/coursesDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:provider/provider.dart';
 import '../../Core/Constants/apiConstants.dart';
-import '../../Core/Providers/themeProvider.dart';
 
 class CategoryCourses extends StatefulWidget {
   final String categoryId;

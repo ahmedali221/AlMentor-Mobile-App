@@ -1,4 +1,3 @@
-import 'package:almentor_clone/models/course.dart';
 
 class Program {
   final String id;

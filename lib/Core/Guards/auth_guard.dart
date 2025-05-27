@@ -8,12 +8,11 @@ class AuthGuard extends StatelessWidget {
   final String currentRoute;
 
   AuthGuard({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentRoute,
     AuthService? authService,
-  })  : authService = authService ?? AuthService(),
-        super(key: key);
+  })  : authService = authService ?? AuthService();
 
   @override
   Widget build(BuildContext context) {

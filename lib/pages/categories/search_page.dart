@@ -1,10 +1,8 @@
-import 'package:almentor_clone/Core/Constants/apiConstants.dart';
 import 'package:almentor_clone/Core/Localization/app_translations.dart';
 import 'package:almentor_clone/Core/Providers/language_provider.dart';
 import 'package:almentor_clone/pages/categories/categoryCourses.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../Core/Providers/themeProvider.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 

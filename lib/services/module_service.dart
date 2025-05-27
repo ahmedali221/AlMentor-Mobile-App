@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../Core/Constants/apiConstants.dart';
 
 class ModuleService {
   // Get modules by course ID

@@ -30,8 +30,8 @@ class RouteGenerator {
     Widget buildPageWithAuth(Widget page) {
       return requiresAuth
           ? AuthGuard(
-              child: page,
               currentRoute: settings.name ?? '/',
+              child: page,
             )
           : page;
     }

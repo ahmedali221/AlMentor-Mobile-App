@@ -16,12 +16,12 @@ class LessonViewerPage extends StatefulWidget {
   final int initialIndex;
 
   const LessonViewerPage({
-    Key? key,
+    super.key,
     required this.course,
     required this.modules,
     required this.lessons,
     required this.initialIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<LessonViewerPage> createState() => _LessonViewerPageState();

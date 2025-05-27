@@ -12,8 +12,6 @@ ThemeData lightTheme = ThemeData(
     primary: Color(0xFFeb2027),
     secondary: Color(0xFF2C2C2C),
     surface: Colors.white,
-    background: Color(0xFFF5F5F5),
-    onBackground: Color(0xFF2C2C2C),
     onSurface: Color(0xFF2C2C2C),
   ),
   appBarTheme: const AppBarTheme(

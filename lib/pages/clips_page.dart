@@ -42,8 +42,7 @@ class _ClipsPageState extends State<ClipsPage> {
       final lessonClips = lessons
           .map((json) => Lesson.fromJson(json))
           .where((lesson) =>
-              lesson.content.videoUrl != null &&
-              lesson.content.videoUrl!.isNotEmpty)
+              lesson.content.videoUrl.isNotEmpty)
           .toList();
       lessonClips.shuffle(Random());
       setState(() {
@@ -51,7 +50,7 @@ class _ClipsPageState extends State<ClipsPage> {
         currentClipIndex = 0;
         isLoading = false;
       });
-      await _initializeVideo(clips[0].content.videoUrl!);
+      await _initializeVideo(clips[0].content.videoUrl);
     } else {
       setState(() {
         isLoading = false;
@@ -74,7 +73,7 @@ class _ClipsPageState extends State<ClipsPage> {
       setState(() {
         currentClipIndex = nextIndex;
       });
-      await _initializeVideo(clips[nextIndex].content.videoUrl!);
+      await _initializeVideo(clips[nextIndex].content.videoUrl);
     }
   }
 
@@ -84,7 +83,7 @@ class _ClipsPageState extends State<ClipsPage> {
       setState(() {
         currentClipIndex = prevIndex;
       });
-      await _initializeVideo(clips[prevIndex].content.videoUrl!);
+      await _initializeVideo(clips[prevIndex].content.videoUrl);
     }
   }
 
@@ -181,9 +180,9 @@ class _ClipsPageState extends State<ClipsPage> {
                                 image: NetworkImage(
                                   clips[currentClipIndex!]
                                           .course
-                                          ?.instructor
-                                          ?.user
-                                          ?.profilePicture ??
+                                          .instructor
+                                          .user
+                                          .profilePicture ??
                                       'https://via.placeholder.com/50',
                                 ),
                                 fit: BoxFit.cover,
@@ -199,29 +198,24 @@ class _ClipsPageState extends State<ClipsPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '${clips[currentClipIndex!].course?.instructor?.user?.firstNameEn}'
-                                  '${clips[currentClipIndex!].course?.instructor?.user?.lastNameEn}',
+                                  '${clips[currentClipIndex!].course.instructor.user.firstNameEn}'
+                                  '${clips[currentClipIndex!].course.instructor.user.lastNameEn}',
                                   style: const TextStyle(
                                     color: Colors.red,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                if (clips[currentClipIndex!]
-                                        .course
-                                        ?.instructor
-                                        ?.professionalTitleEn !=
-                                    null)
-                                  Text(
-                                    clips[currentClipIndex!]
-                                        .course!
-                                        .instructor!
-                                        .professionalTitleEn,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
+                                Text(
+                                  clips[currentClipIndex!]
+                                      .course
+                                      .instructor
+                                      .professionalTitleEn,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
                                   ),
+                                ),
                               ],
                             ),
                           ),
