@@ -49,7 +49,7 @@ class RouteGenerator {
 
       case '/user_courses':
         return MaterialPageRoute(
-          builder: (_) => buildPageWithAuth(const UserCourses()),
+          builder: (_) => buildPageWithAuth(UserCoursesPage()),
         );
 
       case '/account':

@@ -22,13 +22,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 4;
 
-  final List<Widget> _pages = const [
-    AccountPage(),
-    ClipsPage(),
-    SearchPage(),
-    Instructors(),
-    MainPage(),
-    UserCourses(),
+  final List<Widget> _pages = [
+    const AccountPage(),
+    const ClipsPage(),
+    const SearchPage(),
+    const Instructors(),
+    const MainPage(),
+    UserCoursesPage(),
   ];
 
   void _onNavBarTap(int index) {

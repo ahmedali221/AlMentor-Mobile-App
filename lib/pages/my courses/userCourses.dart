@@ -1,46 +1,41 @@
 import 'dart:math' as Math;
-
+import 'package:almentor_clone/Core/Providers/language_provider.dart';
+import 'package:almentor_clone/Core/Providers/themeProvider.dart';
+import 'package:almentor_clone/models/userSavedCourses.dart';
 import 'package:almentor_clone/pages/courses/coursesDetails.dart';
+
+import '../../services/saved_course_service.dart';
+import 'package:almentor_clone/Core/Localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/auth_service.dart';
-import '../../services/saved_course_service.dart';
-import '../../models/course.dart';
-import '../../Core/Localization/app_translations.dart';
-import '../../Core/Providers/language_provider.dart';
-import '../../Core/Providers/themeProvider.dart';
 import 'package:logging/logging.dart';
+import '../../services/auth_service.dart';
 
-class UserCourses extends StatefulWidget {
-  const UserCourses({super.key});
-
+class UserCoursesPage extends StatefulWidget {
   @override
-  State<UserCourses> createState() => _UserCoursesState();
+  _UserCoursesPageState createState() => _UserCoursesPageState();
 }
 
-class _UserCoursesState extends State<UserCourses> {
-  final AuthService _authService = AuthService();
+class _UserCoursesPageState extends State<UserCoursesPage> {
   final SavedCourseService _savedCourseService = SavedCourseService();
+  final AuthService _authService = AuthService();
   final Logger _logger = Logger('UserCoursesPage');
 
+  List<UserSavedCourse> _savedCourses = [];
   bool _isLoading = true;
   bool _isAuthenticated = false;
-  List<Course> _savedCourses = [];
   String? _userId;
   String? _error;
   bool _isRefreshing = false;
-  Map<String, dynamic>? _lastApiResponse;
 
   @override
   void initState() {
     super.initState();
-    _logger.info('UserCourses page initialized');
     _initPage();
   }
 
   Future<void> _initPage() async {
-    _logger.info('Step 1: Checking authentication...');
     setState(() {
       _isLoading = true;
       _error = null;
@@ -48,11 +43,9 @@ class _UserCoursesState extends State<UserCourses> {
 
     try {
       final isLoggedIn = await _authService.isLoggedIn();
-      _logger.info('Step 2: isLoggedIn = $isLoggedIn');
 
       if (!isLoggedIn) {
         if (mounted) {
-          _logger.warning('User not logged in');
           setState(() {
             _isAuthenticated = false;
             _isLoading = false;
@@ -62,14 +55,10 @@ class _UserCoursesState extends State<UserCourses> {
         return;
       }
 
-      // Get user_id from SharedPreferences
-      _logger.info('Step 3: Getting user_id from SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
-      _logger.info('user_id from local storage: $userId');
 
       if (userId == null || userId.isEmpty) {
-        _logger.severe('User ID not found in SharedPreferences');
         if (mounted) {
           setState(() {
             _isAuthenticated = false;
@@ -88,10 +77,8 @@ class _UserCoursesState extends State<UserCourses> {
         });
       }
 
-      // Fetch saved courses
       await _fetchUserCourses();
-    } catch (e, stackTrace) {
-      _logger.severe('Error during initialization', e, stackTrace);
+    } catch (e) {
       if (mounted) {
         setState(() {
           _error = 'Error initializing page: $e';
@@ -102,130 +89,61 @@ class _UserCoursesState extends State<UserCourses> {
   }
 
   Future<void> _fetchUserCourses() async {
-    _logger.info('Step 4: Fetching saved courses from API...');
-    if (mounted) {
+    try {
+      final savedCourses = await _savedCourseService.getUserSavedCourses();
       setState(() {
-        _isLoading =
-            !_isRefreshing; // Only show loading indicator if not refreshing
+        _savedCourses = savedCourses;
+        _isLoading = false;
         _error = null;
       });
-    }
-
-    try {
-      // Debug: Check authentication status before API call
-      final token = await _authService.getToken();
-      _logger.info('Auth token available: ${token != null}');
-
-      final courses =
-          await _savedCourseService.getSavedCourses(forceRefresh: true);
-      _logger.info('Step 5: Saved courses fetched successfully!');
-      _logger.info('Saved courses count: ${courses.length}');
-
-      // Debug: Log each course's basic info
-      for (var i = 0; i < courses.length; i++) {
-        final course = courses[i];
-        _logger.info(
-            'Course $i - ID: ${course.id}, Title: ${course.title['en']}, ' +
-                'Thumbnail: ${course.thumbnail.isNotEmpty ? "Available" : "Missing"}');
-        _logger.info('Course $i - Instructor: ${course.instructor.id}, ' +
-            'Instructor Name: ${course.instructor.user.firstNameEn} ${course.instructor.user.lastNameEn}');
-      }
-
-      // Filter out courses with empty IDs
-      final validCourses =
-          courses.where((course) => course.id.isNotEmpty).toList();
-      if (validCourses.length != courses.length) {
-        _logger.warning(
-            'Filtered out ${courses.length - validCourses.length} courses with empty IDs');
-      }
-
-      if (mounted) {
-        setState(() {
-          _savedCourses = validCourses;
-          _isLoading = false;
-          _isRefreshing = false;
-        });
-      }
-    } catch (e, stackTrace) {
-      _logger.severe('Error fetching saved courses: $e', e, stackTrace);
-      if (mounted) {
-        setState(() {
-          _error = 'Error loading courses: $e';
-          _isLoading = false;
-          _isRefreshing = false;
-        });
-      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _refreshCourses() async {
-    _logger.info('Refreshing courses...');
     setState(() {
       _isRefreshing = true;
     });
     await _fetchUserCourses();
+    setState(() {
+      _isRefreshing = false;
+    });
   }
 
   Future<bool> _unsaveCourse(String courseId) async {
-    _logger.info('Attempting to unsave course: $courseId');
     try {
-      final result = await _savedCourseService.unsaveCourse(courseId);
-      if (result) {
-        _logger.info('Course unsaved successfully');
-        // Remove the course from the local list
+      final success = await _savedCourseService.unsaveCourse(courseId);
+      if (success) {
         setState(() {
-          _savedCourses.removeWhere((course) => course.id == courseId);
+          _savedCourses.removeWhere((savedCourse) =>
+              (savedCourse.course['_id'] == courseId) ||
+              (savedCourse.course['id'] == courseId));
         });
-        return true;
-      } else {
-        _logger.warning('Failed to unsave course: $courseId');
-        return false;
       }
+      return success;
     } catch (e) {
-      _logger.severe('Error unsaving course: $e');
       return false;
     }
   }
 
   void _showAuthDialog() {
-    final languageProvider =
-        Provider.of<LanguageProvider>(context, listen: false);
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final locale = languageProvider.currentLocale.languageCode;
-    final isDark = themeProvider.isDarkMode;
-
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? Colors.grey[850] : Colors.white,
-        title: Text(
-          AppTranslations.getText('authentication_required', locale) ??
-              'Authentication Required',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          AppTranslations.getText('login_required_courses', locale) ??
-              'You need to be logged in to view your courses',
-          style: TextStyle(
-            color: isDark ? Colors.white70 : Colors.black87,
-          ),
-        ),
+        title: Text('Authentication Required'),
+        content: Text('You need to be logged in to view your courses.'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Return to previous screen
+              Navigator.of(context).pop();
             },
-            child: Text(
-              AppTranslations.getText('cancel', locale) ?? 'Cancel',
-              style: TextStyle(
-                color: isDark ? Colors.grey[300] : Colors.grey[700],
-              ),
-            ),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
@@ -233,120 +151,339 @@ class _UserCoursesState extends State<UserCourses> {
               await _authService.saveTargetRoute('/user_courses');
               Navigator.of(context).pushReplacementNamed('/login');
             },
-            child: Text(
-              AppTranslations.getText('login', locale) ?? 'Sign In',
-              style: TextStyle(
-                color: Theme.of(context).primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: Text('Sign In'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCourseItem(Course course, String locale, bool isDark) {
-    // Debug: Add visual indicators for missing data
-    final hasThumbnail = course.thumbnail.isNotEmpty;
-    final hasTitle = course.getLocalizedTitle(Locale(locale)).isNotEmpty;
-    final hasDescription =
-        course.getLocalizedDescription(Locale(locale)).isNotEmpty;
+  // --- UTILS for safe field access ---
+  String _getTitle(Map course, String locale) {
+    try {
+      if (course['title'] is Map) {
+        return course['title'][locale] ?? course['title']['en'] ?? '';
+      }
+      return '';
+    } catch (_) {
+      return '';
+    }
+  }
 
-    return Card(
-      color: isDark ? Colors.grey[850] : Colors.white,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  String _getDescription(Map course, String locale) {
+    try {
+      if (course['description'] is Map) {
+        return course['description'][locale] ??
+            course['description']['en'] ??
+            '';
+      }
+      return '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String? _getThumbnail(Map course) {
+    try {
+      return course['thumbnail'] as String? ??
+          'https://via.placeholder.com/400x200';
+    } catch (_) {
+      return 'https://via.placeholder.com/400x200';
+    }
+  }
+
+  bool _isCourseFree(Map course) {
+    try {
+      return course['isFree'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _getLevel(Map course, String locale) {
+    try {
+      if (course['level'] is Map) {
+        return course['level'][locale] ?? course['level']['en'] ?? '';
+      }
+      return '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  int _getDuration(Map course) {
+    try {
+      return course['duration'] is int
+          ? course['duration']
+          : int.tryParse(course['duration'].toString()) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  String _getCourseId(Map course) {
+    try {
+      return course['_id'] ?? course['id'] ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // --- END UTILS ---
+
+  Widget _buildCourseItem(
+      UserSavedCourse savedCourse, String locale, bool isDark) {
+    final course = savedCourse.course;
+    final courseId = _getCourseId(course);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: hasThumbnail
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      course.thumbnail,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        _logger.warning(
-                            'Failed to load thumbnail: ${course.thumbnail}');
-                        return Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey[300],
-                          child:
-                              Icon(Icons.broken_image, color: Colors.grey[700]),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: Image.network(
+                  _getThumbnail(course) ??
+                      'https://via.placeholder.com/400x200',
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      width: double.infinity,
+                      color: Colors.grey[300],
+                      child: Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Bookmark icon in top right
+              Positioned(
+                top: 10,
+                right: 10,
+                child: GestureDetector(
+                  onTap: () async {
+                    // Confirm before unsaving
+                    final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Unsave Course?'),
+                            content: Text(
+                                'Are you sure you want to remove this course from your saved list?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: Text('Unsave'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ) ??
+                        false;
+
+                    if (confirmed) {
+                      final success = await _unsaveCourse(courseId);
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Course removed from saved list'),
+                            backgroundColor: Colors.green,
+                          ),
                         );
-                      },
+                      } else if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to remove course'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    transitionBuilder: (child, anim) =>
+                        ScaleTransition(scale: anim, child: child),
+                    child: Icon(
+                      Icons.bookmark, // Always filled since all here are saved
+                      key: ValueKey('bookmark_${courseId}_saved'),
+                      color: Theme.of(context).primaryColor,
+                      size: 32,
                     ),
-                  )
-                : Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.red[100], // Highlight missing thumbnails
-                    child: Icon(Icons.image_not_supported, color: Colors.red),
                   ),
-            title: Text(
-              hasTitle
-                  ? course.getLocalizedTitle(Locale(locale))
-                  : '[Missing Title]', // Debug indicator
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          InkWell(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _getTitle(course, locale) ?? 'Untitled Course',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _isCourseFree(course)
+                              ? Colors.green
+                              : Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _isCourseFree(course)
+                              ? AppTranslations.getText('free', locale) ??
+                                  'Free'
+                              : AppTranslations.getText('paid', locale) ??
+                                  'Paid',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    _getDescription(course, locale) ?? '',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        '${_getDuration(course)} ${AppTranslations.getText('minutes', locale) ?? 'minutes'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Icon(
+                        Icons.bar_chart,
+                        size: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        _getLevel(course, locale) ?? 'All Levels',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Saved: ${_formatDate(savedCourse.savedAt)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete_outline, color: Colors.red[400]),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Remove Course'),
-                        content: Text(
-                            'Are you sure you want to remove this course from your saved list?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: Text('Remove',
-                                style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
-                    ) ??
-                    false;
-
-                if (confirmed) {
-                  final success = await _unsaveCourse(course.id);
-                  if (success && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Course removed from saved list')),
-                    );
-                  } else if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to remove course')),
-                    );
-                  }
-                }
-              },
-            ),
             onTap: () {
-              // Navigate to course details
-              _logger.info('Navigating to course details: ${course.id}');
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CourseDetails(courseId: course.id),
-                ),
-              );
+              // Navigate to course details, use your route here.
+              print('Navigating to course details: $courseId');
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => CourseDetails(courseId: courseId),
+              ));
             },
           ),
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 365) {
+      final years = (difference.inDays / 365).floor();
+      return years == 1 ? '1 year ago' : '$years years ago';
+    } else if (difference.inDays > 30) {
+      final months = (difference.inDays / 30).floor();
+      return months == 1 ? '1 month ago' : '$months months ago';
+    } else if (difference.inDays > 0) {
+      return difference.inDays == 1
+          ? '1 day ago'
+          : '${difference.inDays} days ago';
+    } else if (difference.inHours > 0) {
+      return difference.inHours == 1
+          ? '1 hour ago'
+          : '${difference.inHours} hours ago';
+    } else if (difference.inMinutes > 0) {
+      return difference.inMinutes == 1
+          ? '1 minute ago'
+          : '${difference.inMinutes} minutes ago';
+    } else {
+      return 'Just now';
+    }
   }
 
   @override
@@ -477,30 +614,27 @@ class _UserCoursesState extends State<UserCourses> {
           color: isDark ? Colors.white : Colors.black,
         ),
         actions: [
-          // Debug button to show raw API response
-          IconButton(
-            icon: Icon(Icons.bug_report,
-                color: isDark ? Colors.white70 : Colors.black54),
-            onPressed: _lastApiResponse != null
-                ? () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('Debug: API Response'),
-                        content: SingleChildScrollView(
-                          child: Text(_lastApiResponse.toString()),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                : null,
-          ),
+          if (_savedCourses.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_savedCourses.length}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       body: RefreshIndicator(
@@ -570,7 +704,6 @@ class _UserCoursesState extends State<UserCourses> {
                             foregroundColor: Colors.white,
                           ),
                           onPressed: () {
-                            // Navigate to courses page
                             Navigator.of(context).pushNamed('/courses');
                           },
                           child: Text(
@@ -586,8 +719,8 @@ class _UserCoursesState extends State<UserCourses> {
                     itemCount: _savedCourses.length,
                     padding: EdgeInsets.only(bottom: 16),
                     itemBuilder: (context, index) {
-                      final course = _savedCourses[index];
-                      return _buildCourseItem(course, locale, isDark);
+                      final savedCourse = _savedCourses[index];
+                      return _buildCourseItem(savedCourse, locale, isDark);
                     },
                   ),
       ),
