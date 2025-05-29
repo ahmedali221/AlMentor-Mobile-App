@@ -25,6 +25,74 @@ class _CraditPaymentState extends State<CraditPayment> {
   final TextEditingController _promoController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  Future<void> _createSubscriptionRecord(
+      String userId, String subscriptionId, String paymentId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Calculate subscription dates
+      final startDate = DateTime.now();
+      final endDate = startDate.add(const Duration(
+          days: 30)); // Default to 30 days, adjust based on subscription plan
+
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/api/user-subscriptions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'userId': userId,
+          'subscriptionId': subscriptionId,
+          'paymentId': paymentId,
+          'startDate': startDate.toIso8601String(),
+          'endDate': endDate.toIso8601String(),
+          'status': {'en': 'active', 'ar': 'نشط'},
+        }),
+      );
+
+      print('Subscription record response status: ${response.statusCode}');
+      print('Subscription record response body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+            'Failed to create subscription record: ${response.body}');
+      }
+
+      // Update payment status to completed
+      await _updatePaymentStatus(paymentId, token);
+    } catch (e) {
+      print('Error creating subscription record: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _updatePaymentStatus(String paymentId, String token) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('http://localhost:5000/api/payments/$paymentId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'status': {'en': 'completed', 'ar': 'مكتمل'},
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        print('Warning: Failed to update payment status: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating payment status: $e');
+    }
+  }
+
   Future<void> _startStripePayment() async {
     final amount = (widget.payment.amount * 100).toInt();
     final currency = widget.payment.currency;
@@ -62,10 +130,23 @@ class _CraditPaymentState extends State<CraditPayment> {
           'currency': widget.payment.currency,
           'transactionId': 'txn_${DateTime.now().millisecondsSinceEpoch}',
           'status': {'en': 'pending', 'ar': 'قيد الانتظار'},
-          'paymentMethod': 'credit_card'
+          'paymentMethod': 'credit_card',
         }),
       );
 
+      final paymentData = json.decode(paymentResponse.body);
+      String? paymentId;
+      if (paymentData != null &&
+          paymentData['payment'] != null &&
+          paymentData['payment']['_id'] != null) {
+        paymentId = paymentData['payment']['_id'];
+      } else {
+        print(
+            'Error: Could not extract payment _id from response body: ${paymentResponse.body}');
+        throw Exception('Failed to get payment ID from backend.');
+      }
+
+      print('Extracted paymentId from backend: $paymentId');
       print('Payment record response status: ${paymentResponse.statusCode}');
       print('Payment record response body: ${paymentResponse.body}');
 
@@ -73,6 +154,10 @@ class _CraditPaymentState extends State<CraditPayment> {
           paymentResponse.statusCode != 201) {
         throw Exception(
             'Failed to create payment record: ${paymentResponse.body}');
+      }
+
+      if (paymentId == null) {
+        throw Exception('Payment ID is null after extraction.');
       }
 
       // Then create Stripe checkout session
@@ -87,6 +172,11 @@ class _CraditPaymentState extends State<CraditPayment> {
         body: json.encode({
           'amount': amount,
           'currency': currency.toLowerCase(),
+          'userId': userId,
+          'subscriptionId': widget.payment.id,
+          'paymentId': paymentId,
+          'successUrl': 'almentor://payment/success?paymentId=$paymentId',
+          'cancelUrl': 'almentor://payment/cancel',
         }),
       );
 
@@ -115,6 +205,9 @@ class _CraditPaymentState extends State<CraditPayment> {
             const SnackBar(content: Text('Redirecting to payment page...')),
           );
         }
+
+        // Start polling for payment status
+        _pollPaymentStatus(paymentId, token, userId);
       } else {
         print('Could not launch URL: $checkoutUrl');
         throw Exception('Could not launch checkout URL');
@@ -127,6 +220,64 @@ class _CraditPaymentState extends State<CraditPayment> {
           SnackBar(content: Text('Error: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _pollPaymentStatus(
+      String paymentId, String token, String userId) async {
+    int attempts = 0;
+    const maxAttempts = 30; // 5 minutes total (10 seconds * 30)
+
+    while (attempts < maxAttempts) {
+      try {
+        final response = await http.get(
+          Uri.parse('http://localhost:5000/api/payments/$paymentId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final paymentData = json.decode(response.body);
+          final status = paymentData['status']['en'];
+
+          if (status == 'completed') {
+            // Payment is successful, create subscription
+            await _createSubscriptionRecord(
+                userId, widget.payment.id, paymentId);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('تم إنشاء الاشتراك بنجاح')),
+              );
+              Navigator.pop(context, true);
+            }
+            return;
+          } else if (status == 'failed' || status == 'cancelled') {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('فشلت عملية الدفع')),
+              );
+              Navigator.pop(context, false);
+            }
+            return;
+          }
+        }
+
+        // Wait for 10 seconds before next attempt
+        await Future.delayed(const Duration(seconds: 10));
+        attempts++;
+      } catch (e) {
+        print('Error polling payment status: $e');
+        attempts++;
+      }
+    }
+
+    // If we get here, we've timed out
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('انتهت مهلة انتظار الدفع')),
+      );
+      Navigator.pop(context, false);
     }
   }
 
