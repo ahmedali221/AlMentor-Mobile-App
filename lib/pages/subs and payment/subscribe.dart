@@ -127,6 +127,7 @@ class _SubscribePageState extends State<SubscribePage> {
         amount: selected.amount,
         currency: selected.currency,
         paymentMethod: '',
+        
         statusAr: AppTranslations.getText(
                 'new',
                 Provider.of<LanguageProvider>(context, listen: false)
