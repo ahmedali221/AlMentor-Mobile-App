@@ -61,8 +61,8 @@ class _SearchPageState extends State<SearchPage> {
 
   Future<void> _fetchCategories() async {
     try {
-      final response =
-          await http.get(Uri.parse('http://localhost:5000/api/category'));
+      final response = await http.get(Uri.parse(
+          'https://almentor-dashboard.netlify.app/api/category'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

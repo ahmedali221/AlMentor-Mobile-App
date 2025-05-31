@@ -39,8 +39,8 @@ class _MainPageState extends State<MainPage> {
   Future<List<Map<String, dynamic>>> fetchCourses() async {
     await Future.delayed(
         const Duration(milliseconds: 500)); // Simulate network delay
-    final response =
-        await http.get(Uri.parse('http://localhost:5000/api/courses'));
+    final response = await http.get(Uri.parse(
+        'https://al-mentor-database-production.up.railway.app/api/courses'));
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       if (decoded is List) {
@@ -57,8 +57,8 @@ class _MainPageState extends State<MainPage> {
   Future<List<Map<String, dynamic>>> fetchPrograms() async {
     await Future.delayed(
         const Duration(milliseconds: 800)); // Simulate network delay
-    final response =
-        await http.get(Uri.parse('http://localhost:5000/api/programs'));
+    final response = await http.get(Uri.parse(
+        'https://al-mentor-database-production.up.railway.app/api/programs'));
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       if (decoded is List) {
@@ -75,8 +75,8 @@ class _MainPageState extends State<MainPage> {
   Future<List<Map<String, dynamic>>> fetchInstructors() async {
     await Future.delayed(
         const Duration(milliseconds: 700)); // Simulate network delay
-    final response =
-        await http.get(Uri.parse('http://localhost:5000/api/instructors'));
+    final response = await http.get(Uri.parse(
+        'https://al-mentor-database-production.up.railway.app/api/instructors'));
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       if (decoded is Map && decoded['data'] is List) {

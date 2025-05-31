@@ -30,8 +30,8 @@ class _InstructorsState extends State<Instructors> {
   }
 
   Future<List<Map<String, dynamic>>> fetchInstructors() async {
-    final response =
-        await http.get(Uri.parse('http://localhost:5000/api/instructors'));
+    final response = await http.get(Uri.parse(
+        'https://al-mentor-database-production.up.railway.app/api/instructors'));
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       // The API returns: { "success": true, "message": "...", "data": [ ... ] }

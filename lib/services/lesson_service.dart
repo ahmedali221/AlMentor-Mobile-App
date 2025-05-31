@@ -6,7 +6,8 @@ class LessonService {
   Future<List<dynamic>> getLessonsByModule(String moduleId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/lessons/module/$moduleId'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/lessons/module/$moduleId'),
       );
 
       if (response.statusCode == 200) {
@@ -26,7 +27,8 @@ class LessonService {
   Future<List<dynamic>> getLessonsByCourse(String courseId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/lessons/course/$courseId'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/lessons/course/$courseId'),
       );
 
       if (response.statusCode == 200) {
@@ -46,7 +48,8 @@ class LessonService {
   Future<dynamic> getLessonById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.7:5000/api/lessons/$id'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/lessons/$id'),
       );
 
       if (response.statusCode == 200) {
