@@ -27,8 +27,7 @@ class _CategoryCoursesState extends State<CategoryCourses> {
   Future<void> fetchCategoryCourses() async {
     try {
       final response = await http.get(
-        Uri.parse(
-            '${ApiConstants.baseUrl}/api/courses/category/${widget.categoryId}'),
+        Uri.parse('${ApiConstants.baseUrl}/category/${widget.categoryId}'),
       );
 
       if (response.statusCode == 200) {

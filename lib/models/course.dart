@@ -47,35 +47,37 @@ class Course {
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
+    String getLang(Map? map) => map?['en'] ?? map?.values.first ?? '';
+
     return Course(
       id: json['_id'] ?? '',
       title: {
-        'en': json['title']['en'] ?? '',
-        'ar': json['title']['ar'] ?? '',
+        'en': getLang(json['title']['en']),
+        'ar': getLang(json['title']['ar']),
       },
       slug: {
-        'en': json['slug']['en'] ?? '',
-        'ar': json['slug']['ar'] ?? '',
+        'en': getLang(json['slug']['en']),
+        'ar': getLang(json['slug']['ar']),
       },
       description: {
-        'en': json['description']['en'] ?? '',
-        'ar': json['description']['ar'] ?? '',
+        'en': getLang(json['description']['en']),
+        'ar': getLang(json['description']['ar']),
       },
       shortDescription: json['shortDescription'] != null
           ? {
-              'en': json['shortDescription']['en'] ?? '',
-              'ar': json['shortDescription']['ar'] ?? '',
+              'en': getLang(json['shortDescription']['en']),
+              'ar': getLang(json['shortDescription']['ar']),
             }
           : null,
       level: {
-        'en': json['level']['en'] ?? 'beginner',
-        'ar': json['level']['ar'] ?? 'مبتدئ',
+        'en': getLang(json['level']['en']) ?? 'beginner',
+        'ar': getLang(json['level']['ar']) ?? 'مبتدئ',
       },
       language: {
-        'en': json['language']['en'] ?? 'Arabic',
-        'ar': json['language']['ar'] ?? 'العربية',
+        'en': getLang(json['language']['en']) ?? 'Arabic',
+        'ar': getLang(json['language']['ar']) ?? 'العربية',
       },
-      thumbnail: json['thumbnail'] ?? '',
+      thumbnail: getLang(json['thumbnail']),
       duration: json['duration'] != null
           ? (json['duration'] is int
               ? json['duration']
@@ -91,9 +93,9 @@ class Course {
       lastUpdated: json['lastUpdated'] != null
           ? DateTime.parse(json['lastUpdated'])
           : DateTime.now(),
-      topicId: json['topic'] ?? '',
-      subtopicId: json['subtopic'],
-      categoryId: json['category'] ?? '',
+      topicId: getLang(json['topic']),
+      subtopicId: getLang(json['subtopic']),
+      categoryId: getLang(json['category']),
       modules: json['modules'] != null
           ? List<Module>.from(json['modules'].map((x) => Module.fromJson(x)))
           : [],

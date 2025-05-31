@@ -41,7 +41,8 @@ class _CraditPaymentState extends State<CraditPayment> {
           days: 30)); // Default to 30 days, adjust based on subscription plan
 
       final response = await http.post(
-        Uri.parse('http://localhost:5000/api/user-subscriptions'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/user-subscriptions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -75,7 +76,8 @@ class _CraditPaymentState extends State<CraditPayment> {
   Future<void> _updatePaymentStatus(String paymentId, String token) async {
     try {
       final response = await http.patch(
-        Uri.parse('http://localhost:5000/api/payments/$paymentId'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/payments/$paymentId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -118,7 +120,8 @@ class _CraditPaymentState extends State<CraditPayment> {
       print('Creating payment record...');
 
       final paymentResponse = await http.post(
-        Uri.parse('http://localhost:5000/api/payments'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/payments'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -164,7 +167,8 @@ class _CraditPaymentState extends State<CraditPayment> {
       print('Creating Stripe checkout session...');
 
       final stripeResponse = await http.post(
-        Uri.parse('http://localhost:5000/api/stripe/createCheckoutSession'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/stripe/createCheckoutSession'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -231,7 +235,8 @@ class _CraditPaymentState extends State<CraditPayment> {
     while (attempts < maxAttempts) {
       try {
         final response = await http.get(
-          Uri.parse('http://localhost:5000/api/payments/$paymentId'),
+          Uri.parse(
+              'https://al-mentor-database-production.up.railway.app/api/payments/$paymentId'),
           headers: {
             'Authorization': 'Bearer $token',
           },

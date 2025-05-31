@@ -6,7 +6,8 @@ class ModuleService {
   Future<List<dynamic>> getModulesByCourse(String courseId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/modules/course/$courseId'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/modules/course/$courseId'),
       );
 
       if (response.statusCode == 200) {
@@ -26,7 +27,8 @@ class ModuleService {
   Future<dynamic> getModuleById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.7:5000/api/modules/$id'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/modules/$id'),
       );
 
       if (response.statusCode == 200) {

@@ -1,12 +1,9 @@
 import 'package:almentor_clone/Core/Custom%20Widgets/customTextField.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../Core/Custom Widgets/customButton.dart';
 import '../../Core/Providers/themeProvider.dart';
+import '../../services/auth_service.dart';
 
 class SignUpPage extends StatelessWidget {
   final usernameController = TextEditingController(text: "sara456");
@@ -23,40 +20,18 @@ class SignUpPage extends StatelessWidget {
 
   Future<void> signUpUser(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.7:5000/api/auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'username': usernameController.text,
-          'email': emailController.text,
-          'password': passwordController.text,
-          'firstName': firstNameController.text,
-          'lastName': lastNameController.text,
-          'profilePicture': profilePictureController.text,
-        }),
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final result = await authService.register(
+        usernameController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text.trim(),
       );
 
-      if (response.statusCode == 201) {
-        // Extract JWT token from response
-        final responseData = json.decode(response.body);
-        final token = responseData['token'];
-        if (token != null) {
-          // Save token to SharedPreferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('jwt_token', token);
-          Navigator.pushReplacementNamed(context, '/home');
-          print('User signed up successfully');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signup failed: Token not found')),
-          );
-        }
+      if (result['success'] == true) {
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // Handle signup error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed: ${response.body}')),
+          SnackBar(content: Text(result['message'])),
         );
       }
     }
