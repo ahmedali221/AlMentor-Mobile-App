@@ -49,7 +49,7 @@ class CourseSaveService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/saved-courses/user/$userId'),
+        Uri.parse('$baseUrl/saved-courses/user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -97,7 +97,7 @@ class CourseSaveService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/saved-courses'),
+        Uri.parse('$baseUrl/saved-courses'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -134,7 +134,7 @@ class CourseSaveService {
       }
 
       final response = await http.delete(
-        Uri.parse('$baseUrl/api/saved-courses/$userId/$courseId'),
+        Uri.parse('$baseUrl/saved-courses/$userId/$courseId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -170,7 +170,7 @@ class CourseSaveService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/saved-courses/user/$userId'),
+        Uri.parse('$baseUrl/saved-courses/user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

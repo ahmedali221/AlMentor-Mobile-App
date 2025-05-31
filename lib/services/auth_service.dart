@@ -13,7 +13,7 @@ class AuthService {
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/login'),
+        Uri.parse('${ApiConstants.baseUrl}/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
@@ -64,7 +64,7 @@ class AuthService {
       String username, String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/register'),
+        Uri.parse('${ApiConstants.baseUrl}/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'username': username,
@@ -165,7 +165,7 @@ class AuthService {
   Future<User?> fetchUserData(String userId, String token) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/users/$userId'),
+        Uri.parse('${ApiConstants.baseUrl}/users/$userId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

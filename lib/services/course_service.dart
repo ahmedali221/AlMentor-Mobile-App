@@ -6,7 +6,7 @@ import '../Core/Constants/apiConstants.dart';
 class CourseService {
   Future<List<Course>> getCourses() async {
     final response =
-        await http.get(Uri.parse('${ApiConstants.baseUrl}/api/courses'));
+        await http.get(Uri.parse('${ApiConstants.baseUrl}/courses'));
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       // If the response is a Map, convert it to a List
@@ -26,7 +26,7 @@ class CourseService {
   Future<Course> getCourseById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/courses/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/courses/$id'),
       );
 
       if (response.statusCode == 200) {
@@ -45,7 +45,7 @@ class CourseService {
   Future<List<Course>> getCoursesByCategory(String categoryId) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/courses/category/$categoryId'),
+        Uri.parse('${ApiConstants.baseUrl}/courses/category/$categoryId'),
       );
 
       if (response.statusCode == 200) {
@@ -65,8 +65,7 @@ class CourseService {
   Future<List<Course>> getCoursesByInstructor(String instructorId) async {
     try {
       final response = await http.get(
-        Uri.parse(
-            '${ApiConstants.baseUrl}/api/courses/instructor/$instructorId'),
+        Uri.parse('${ApiConstants.baseUrl}/courses/instructor/$instructorId'),
       );
 
       if (response.statusCode == 200) {

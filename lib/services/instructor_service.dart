@@ -8,7 +8,7 @@ class InstructorService {
   Future<List<Instructor>> getInstructors() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/instructors'),
+        Uri.parse('${ApiConstants.baseUrl}/instructors'),
       );
 
       if (response.statusCode == 200) {
@@ -30,7 +30,7 @@ class InstructorService {
   Future<Instructor> getInstructorById(String id) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/instructors/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/instructors/$id'),
       );
 
       if (response.statusCode == 200) {

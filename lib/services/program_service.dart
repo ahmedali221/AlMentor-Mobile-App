@@ -8,7 +8,7 @@ class ProgramService {
   Future<List<Program>> getPrograms() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/programs'),
+        Uri.parse('${ApiConstants.baseUrl}/programs'),
       );
 
       if (response.statusCode == 200) {
@@ -29,7 +29,7 @@ class ProgramService {
     print("Fetching program with ID: $id");
     try {
       final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/api/programs/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/programs/$id'),
       );
       // print("Response status code: ${response.statusCode}");
       // print("Response body: ${response.body}");

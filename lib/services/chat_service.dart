@@ -25,7 +25,7 @@ class ChatService {
       throw Exception('User not authenticated');
     }
     final response = await http.get(
-      Uri.parse('$baseUrl/api/chats/user/$userId'),
+      Uri.parse('$baseUrl/chats/user/$userId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -45,7 +45,7 @@ class ChatService {
       throw Exception('User not authenticated');
     }
     final response = await http.get(
-      Uri.parse('$baseUrl/api/chats/$chatId'),
+      Uri.parse('$baseUrl/chats/$chatId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -67,7 +67,7 @@ class ChatService {
       throw Exception('User not authenticated');
     }
     final response = await http.post(
-      Uri.parse('$baseUrl/api/chats/'),
+      Uri.parse('$baseUrl/chats/'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -93,7 +93,7 @@ class ChatService {
       throw Exception('User not authenticated');
     }
     final response = await http.delete(
-      Uri.parse('$baseUrl/api/chats/$chatId'),
+      Uri.parse('$baseUrl/chats/$chatId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -110,7 +110,7 @@ class ChatService {
       throw Exception('User not authenticated');
     }
     final response = await http.put(
-      Uri.parse('$baseUrl/api/chats/$chatId/title'),
+      Uri.parse('$baseUrl/chats/$chatId/title'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

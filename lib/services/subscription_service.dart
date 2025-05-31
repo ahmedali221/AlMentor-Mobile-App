@@ -33,7 +33,7 @@ class SubscriptionService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/user-subscriptions/user/$userId'),
+        Uri.parse('$baseUrl/user-subscriptions/user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -87,7 +87,7 @@ class SubscriptionService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/user-subscriptions/user/$userId'),
+        Uri.parse('$baseUrl/user-subscriptions/user/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

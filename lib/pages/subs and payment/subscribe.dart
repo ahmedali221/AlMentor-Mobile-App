@@ -79,7 +79,8 @@ class _SubscribePageState extends State<SubscribePage> {
       }
 
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/subscriptions'),
+        Uri.parse(
+            'https://al-mentor-database-production.up.railway.app/api/subscriptions'),
         headers: token != null ? {'Authorization': 'Bearer $token'} : {},
       );
 
