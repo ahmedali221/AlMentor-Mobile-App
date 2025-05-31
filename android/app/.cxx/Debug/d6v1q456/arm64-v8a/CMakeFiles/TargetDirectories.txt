@@ -1,0 +1,2 @@
+C:/Users/Ahmed Ali/Desktop/To'mah Website Photos/AlMentor-Mobile-App/android/app/.cxx/Debug/d6v1q456/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/Ahmed Ali/Desktop/To'mah Website Photos/AlMentor-Mobile-App/android/app/.cxx/Debug/d6v1q456/arm64-v8a/CMakeFiles/rebuild_cache.dir

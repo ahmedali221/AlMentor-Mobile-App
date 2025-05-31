@@ -26,12 +26,12 @@ ThemeData lightTheme = ThemeData(
       fontWeight: FontWeight.w600,
     ),
   ),
-  cardTheme: CardTheme(
-    color: Colors.white,
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  ),
+  // cardTheme: CardTheme(
+  //   color: Colors.white,
+  //   elevation: 2,
+  //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  //   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  // ),
   drawerTheme: const DrawerThemeData(
     backgroundColor: Colors.white,
   ),
